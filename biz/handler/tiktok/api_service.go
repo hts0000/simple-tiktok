@@ -4,8 +4,16 @@ package tiktok
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 
+	"simple-tiktok/biz/dal/db"
 	tiktok "simple-tiktok/biz/model/tiktok"
+	"simple-tiktok/biz/mw"
+	"simple-tiktok/pkg/errno"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
@@ -18,29 +26,66 @@ func CreateUser(ctx context.Context, c *app.RequestContext) {
 	var req tiktok.CreateUserRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		log.Printf("参数BindAndValidate失败: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
 		return
 	}
 
-	resp := new(tiktok.CreateUserResponse)
+	users, err := db.QueryUser(ctx, req.Username)
+	if err != nil {
+		log.Printf("查询用户失败: %v\n", err.Error())
+		c.JSON(http.StatusInternalServerError, tiktok.CreateUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+	if len(users) != 0 {
+		c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+			StatusCode: errno.UserAlreadyExistErr.ErrCode,
+			StatusMsg:  &errno.UserAlreadyExistErr.ErrMsg,
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	h := md5.New()
+	if _, err = io.WriteString(h, req.Password); err != nil {
+		log.Printf("md5加密错误: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+
+	password := fmt.Sprintf("%x", h.Sum(nil))
+	uid, err := db.CreateUser(ctx, []*db.User{{
+		Username: req.Username,
+		Password: password,
+	}})
+	if err != nil {
+		log.Printf("创建用户失败: %v\n", err.Error())
+		c.JSON(http.StatusInternalServerError, tiktok.CreateUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, tiktok.CreateUserResponse{
+		StatusCode: errno.Success.ErrCode,
+		StatusMsg:  &errno.Success.ErrMsg,
+		UserID:     int64(uid),
+	})
 }
 
 // CheckUser .
 // @router /douyin/user/login/ [POST]
 func CheckUser(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req tiktok.CheckUserRequest
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp := new(tiktok.CheckUserResponse)
-
-	c.JSON(consts.StatusOK, resp)
+	mw.JwtMiddleware.LoginHandler(ctx, c)
 }
 
 // Feed .

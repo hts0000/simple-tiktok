@@ -1,8 +1,8 @@
 namespace go tiktok
 
 struct CreateUserRequest {
-    1: string username (api.form="username", api.vd="len($) > 0 && len($) < 33")
-    2: string password (api.form="password", api.vd="len($) > 0 && len($) < 33")
+    1: string username (api.qury="username", api.vd="len($) > 0 && len($) < 33")
+    2: string password (api.qury="password", api.vd="len($) > 0 && len($) < 33")
 }
 
 struct CreateUserResponse {
@@ -13,8 +13,8 @@ struct CreateUserResponse {
 }
 
 struct CheckUserRequest {
-    1: string username (api.form="username", api.vd="len($) > 0 && len($) < 33")
-    2: string password (api.form="password", api.vd="len($) > 0 && len($) < 33")
+    1: string username (api.qury="username", api.vd="len($) > 0 && len($) < 33")
+    2: string password (api.qury="password", api.vd="len($) > 0 && len($) < 33")
 }
 
 struct CheckUserResponse {

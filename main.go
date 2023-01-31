@@ -3,10 +3,19 @@
 package main
 
 import (
+	"simple-tiktok/biz/dal"
+	"simple-tiktok/biz/mw"
+
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
+func Init() {
+	dal.Init()
+	mw.InitJWT()
+}
+
 func main() {
+	Init()
 	h := server.Default(server.WithHostPorts(":8080"))
 
 	register(h)

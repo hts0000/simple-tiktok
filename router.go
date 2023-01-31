@@ -3,8 +3,15 @@
 package main
 
 import (
-	"github.com/cloudwego/hertz/pkg/app/server"
+	"context"
+	"log"
+	"net/http"
 	handler "simple-tiktok/biz/handler"
+	"simple-tiktok/pkg/errno"
+
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/common/utils"
 )
 
 // customizeRegister registers customize routers.
@@ -12,4 +19,18 @@ func customizedRegister(r *server.Hertz) {
 	r.GET("/ping", handler.Ping)
 
 	// your code ...
+	r.NoRoute(func(ctx context.Context, c *app.RequestContext) { // used for HTTP 404
+		log.Println("recv request", string(c.Method()), string(c.URI().FullURI()))
+		c.JSON(http.StatusOK, utils.H{
+			"status_code": errno.PageNotFound.ErrCode,
+			"status_msg":  errno.PageNotFound.ErrMsg,
+		})
+	})
+	r.NoMethod(func(ctx context.Context, c *app.RequestContext) { // used for HTTP 405
+		log.Println("recv request", string(c.Method()), string(c.URI().FullURI()))
+		c.JSON(http.StatusOK, utils.H{
+			"status_code": errno.MethodNotAllowed.ErrCode,
+			"status_msg":  errno.MethodNotAllowed.ErrMsg,
+		})
+	})
 }

@@ -9,8 +9,8 @@ import (
 )
 
 type CreateUserRequest struct {
-	Username string `thrift:"username,1" form:"username" json:"username" vd:"len($) > 0 && len($) < 33"`
-	Password string `thrift:"password,2" form:"password" json:"password" vd:"len($) > 0 && len($) < 33"`
+	Username string `thrift:"username,1" form:"username" json:"username" query:"username" vd:"len($) > 0 && len($) < 33"`
+	Password string `thrift:"password,2" form:"password" json:"password" query:"password" vd:"len($) > 0 && len($) < 33"`
 }
 
 func NewCreateUserRequest() *CreateUserRequest {
@@ -478,8 +478,8 @@ func (p *CreateUserResponse) String() string {
 }
 
 type CheckUserRequest struct {
-	Username string `thrift:"username,1" form:"username" json:"username" vd:"len($) > 0 && len($) < 33"`
-	Password string `thrift:"password,2" form:"password" json:"password" vd:"len($) > 0 && len($) < 33"`
+	Username string `thrift:"username,1" form:"username" json:"username" query:"username" vd:"len($) > 0 && len($) < 33"`
+	Password string `thrift:"password,2" form:"password" json:"password" query:"password" vd:"len($) > 0 && len($) < 33"`
 }
 
 func NewCheckUserRequest() *CheckUserRequest {

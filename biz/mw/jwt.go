@@ -2,6 +2,10 @@ package mw
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"simple-tiktok/biz/dal/db"
 	"simple-tiktok/biz/model/tiktok"
@@ -61,6 +65,17 @@ func InitJWT() {
 				return "", errno.ServiceErr
 			}
 			if len(users) == 0 {
+				return "", jwt.ErrFailedAuthentication
+			}
+
+			h := md5.New()
+			if _, err = io.WriteString(h, req.Password); err != nil {
+				log.Printf("md5加密错误: %v\n", err.Error())
+				return "", errno.ServiceErr
+			}
+
+			password := fmt.Sprintf("%x", h.Sum(nil))
+			if password != users[0].Password {
 				return "", jwt.ErrFailedAuthentication
 			}
 

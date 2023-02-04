@@ -13,10 +13,10 @@ import (
 	"simple-tiktok/biz/dal/db"
 	tiktok "simple-tiktok/biz/model/tiktok"
 	"simple-tiktok/biz/mw"
+	"simple-tiktok/pkg/consts"
 	"simple-tiktok/pkg/errno"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
 // CreateUser .
@@ -54,7 +54,7 @@ func CreateUser(ctx context.Context, c *app.RequestContext) {
 	h := md5.New()
 	if _, err = io.WriteString(h, req.Password); err != nil {
 		log.Printf("md5加密错误: %v\n", err.Error())
-		c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+		c.JSON(http.StatusInternalServerError, tiktok.CreateUserResponse{
 			StatusCode: errno.ServiceErr.ErrCode,
 			StatusMsg:  &errno.ServiceErr.ErrMsg,
 		})
@@ -74,12 +74,8 @@ func CreateUser(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-
-	c.JSON(http.StatusOK, tiktok.CreateUserResponse{
-		StatusCode: errno.Success.ErrCode,
-		StatusMsg:  &errno.Success.ErrMsg,
-		UserID:     int64(uid),
-	})
+	c.Set(consts.IdentityKey, &tiktok.User{ID: int64(uid)})
+	mw.JwtMiddleware.LoginHandler(ctx, c)
 }
 
 // CheckUser .
@@ -95,11 +91,11 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 	var req tiktok.FeedRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	resp := new(tiktok.FeedResponse)
 
-	c.JSON(consts.StatusOK, resp)
+	c.JSON(http.StatusOK, resp)
 }

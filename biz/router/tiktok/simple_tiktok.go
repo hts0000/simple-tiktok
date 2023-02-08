@@ -25,6 +25,7 @@ func Register(r *server.Hertz) {
 		}
 		{
 			_user := _douyin.Group("/user", _userMw()...)
+			_user.GET("/", append(_getuserMw(), tiktok.GetUser)...)
 			{
 				_login := _user.Group("/login", _loginMw()...)
 				_login.POST("/", append(_checkuserMw(), tiktok.CheckUser)...)

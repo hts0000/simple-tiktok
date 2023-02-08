@@ -36,6 +36,17 @@ struct FeedResponse {
     4: optional i64 next_time      // 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
 }
 
+struct GetUserRequest {
+    1: i64 user_id  // 用户id
+    2: string token // 用户鉴权token
+}
+
+struct GetUserResponse {
+    1: i64 status_code              // 状态码，0-成功，其他值-失败
+    2: optional string status_msg   // 返回状态描述
+    3: User user                    // 用户信息
+}
+
 struct Video {
     1: i64 id              // 视频唯一标识
     2: User author         // 视频作者信息
@@ -59,6 +70,7 @@ struct User {
 service ApiService {
     CreateUserResponse CreateUser(1: CreateUserRequest req) (api.post="/douyin/user/register/")
     CheckUserResponse CheckUser(1: CheckUserRequest req) (api.post="/douyin/user/login/")
-
+    GetUserResponse GetUser(1: GetUserRequest req) (api.get="/douyin/user/")
+    
     FeedResponse Feed(1: FeedRequest req) (api.get="/douyin/feed/")
 }

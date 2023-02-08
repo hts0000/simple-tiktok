@@ -31,13 +31,12 @@ func MGetUsers(c context.Context, userIDs []int64) ([]*User, error) {
 }
 
 // CreateUser create user info
-func CreateUser(c context.Context, users []*User) (uint, error) {
-	err := DB.WithContext(c).Create(users).Error
+func CreateUser(c context.Context, user *User) (uint, error) {
+	err := DB.WithContext(c).Create(user).Error
 	if err != nil {
 		return 0, err
 	}
-	uid := users[0].ID
-	return uid, nil
+	return user.ID, nil
 }
 
 // QueryUser query list of user info

@@ -1,7 +1,8 @@
 package consts
 
 const (
-	IdentityKey     = "id"
+	IdentityKeyID   = "id"
+	IdentityKeyName = "name"
 	SecretKey       = "simple-tiktok"
 	DBUser          = "root"
 	DBPasswd        = "123456"

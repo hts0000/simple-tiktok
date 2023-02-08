@@ -19,31 +19,38 @@ import (
 
 var JwtMiddleware *jwt.HertzJWTMiddleware
 
+var QueryUserFunc = db.QueryUser
+
 func InitJWT() {
 	JwtMiddleware, _ = jwt.New(&jwt.HertzJWTMiddleware{
-		Key:           []byte(consts.SecretKey),
-		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
+		Key: []byte(consts.SecretKey),
+		// 从哪获得jwt token
+		// 从 header 中，根据 Authorization 字段获取
+		// 从 query(url参数) 中，根据 token 字段获取
+		TokenLookup: "header: Authorization, query: token, cookie: jwt",
+		// 如果是从 header 中获取，根据 jwt 的使用约定，token 前缀是 Bearer
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,
 		Timeout:       time.Hour * 24,
 		MaxRefresh:    time.Hour,
-		// 根据这个key，可以从上下文中拿出存储的用户id，用于后续的查询
-		IdentityKey: consts.IdentityKey,
+		// 根据这个key，可以从 c 中拿出 IdentityHandler 返回的数据
+		IdentityKey: consts.IdentityKeyID,
 		// IdentityHandler 作用在登录成功后的每次请求中
 		IdentityHandler: func(c context.Context, ctx *app.RequestContext) interface{} {
 			claims := jwt.ExtractClaims(c, ctx)
-			user := claims[consts.IdentityKey].(*tiktok.User)
 			return &tiktok.User{
-				ID: user.ID,
+				// 从 token 中解出 id 和 name 信息
+				ID:   int64(claims[consts.IdentityKeyID].(float64)),
+				Name: claims[consts.IdentityKeyName].(string),
 			}
 		},
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			// 在上下文中存入用户id
+			// 生成的 token 将会携带用户的 id 和 name 的信息
 			if user, ok := data.(*tiktok.User); ok {
-				v := jwt.MapClaims{
-					consts.IdentityKey: user,
+				return jwt.MapClaims{
+					consts.IdentityKeyID:   user.ID,
+					consts.IdentityKeyName: user.Name,
 				}
-				return v
 			}
 			// 默认存储 token 的过期时间和创建时间
 			return jwt.MapClaims{}
@@ -60,7 +67,7 @@ func InitJWT() {
 			}
 
 			// TODO: 微服务拆分，使用rpc请求auth服务，rpc.CheckUser
-			users, err := db.QueryUser(c, req.Username)
+			users, err := QueryUserFunc(c, req.Username)
 			if err != nil {
 				return "", errno.ServiceErr
 			}
@@ -81,13 +88,14 @@ func InitJWT() {
 
 			// 返回将要存储的数据
 			user := &tiktok.User{
-				ID: int64(users[0].ID),
+				ID:   int64(users[0].ID),
+				Name: users[0].Username,
 			}
-			ctx.Set(consts.IdentityKey, user)
+			ctx.Set(consts.IdentityKeyID, user)
 			return user, nil
 		},
 		LoginResponse: func(c context.Context, ctx *app.RequestContext, code int, token string, expire time.Time) {
-			user := ctx.Value(consts.IdentityKey).(*tiktok.User)
+			user := ctx.Value(consts.IdentityKeyID).(*tiktok.User)
 			ctx.JSON(http.StatusOK, tiktok.CheckUserResponse{
 				StatusCode: errno.Success.ErrCode,
 				StatusMsg:  &errno.Success.ErrMsg,

@@ -62,10 +62,10 @@ func CreateUser(ctx context.Context, c *app.RequestContext) {
 	}
 
 	password := fmt.Sprintf("%x", h.Sum(nil))
-	uid, err := db.CreateUser(ctx, []*db.User{{
+	_, err = db.CreateUser(ctx, &db.User{
 		Username: req.Username,
 		Password: password,
-	}})
+	})
 	if err != nil {
 		log.Printf("创建用户失败: %v\n", err.Error())
 		c.JSON(http.StatusInternalServerError, tiktok.CreateUserResponse{
@@ -74,7 +74,7 @@ func CreateUser(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	c.Set(consts.IdentityKey, &tiktok.User{ID: int64(uid)})
+
 	mw.JwtMiddleware.LoginHandler(ctx, c)
 }
 
@@ -118,25 +118,15 @@ func GetUser(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	users, err := db.MGetUsers(ctx, []int64{req.UserID})
-	if err != nil || len(users) == 0 {
-		log.Printf("查询用户失败: %v\n", err.Error())
-		c.JSON(http.StatusInternalServerError, tiktok.GetUserResponse{
-			StatusCode: errno.ServiceErr.ErrCode,
-			StatusMsg:  &errno.ServiceErr.ErrMsg,
-		})
-		return
-	}
-
+	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
 	followersCount := int64(len(followers))
 	followsCount := int64(len(follows))
-	username := users[0].Username
 	c.JSON(http.StatusOK, tiktok.GetUserResponse{
 		StatusCode: errno.Success.ErrCode,
 		StatusMsg:  &errno.Success.ErrMsg,
 		User: &tiktok.User{
 			ID:            req.UserID,
-			Name:          username,
+			Name:          user.Name,
 			FollowCount:   &followsCount,
 			FollowerCount: &followersCount,
 			IsFollow:      true,

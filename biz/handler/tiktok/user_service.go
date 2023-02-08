@@ -84,22 +84,6 @@ func CheckUser(ctx context.Context, c *app.RequestContext) {
 	mw.JwtMiddleware.LoginHandler(ctx, c)
 }
 
-// Feed .
-// @router /douyin/feed/ [GET]
-func Feed(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req tiktok.FeedRequest
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp := new(tiktok.FeedResponse)
-
-	c.JSON(http.StatusOK, resp)
-}
-
 // GetUser .
 // @router /douyin/user/ [GET]
 func GetUser(ctx context.Context, c *app.RequestContext) {

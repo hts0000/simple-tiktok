@@ -36,8 +36,8 @@ func InitJWT() {
 		// 根据这个key，可以从 c 中拿出 IdentityHandler 返回的数据
 		IdentityKey: consts.IdentityKeyID,
 		// IdentityHandler 作用在登录成功后的每次请求中
-		IdentityHandler: func(c context.Context, ctx *app.RequestContext) interface{} {
-			claims := jwt.ExtractClaims(c, ctx)
+		IdentityHandler: func(ctx context.Context, c *app.RequestContext) interface{} {
+			claims := jwt.ExtractClaims(ctx, c)
 			return &tiktok.User{
 				// 从 token 中解出 id 和 name 信息
 				ID:   int64(claims[consts.IdentityKeyID].(float64)),
@@ -57,9 +57,9 @@ func InitJWT() {
 		},
 		// 登录时触发，用于认证用户的登录信息
 		// 这里返回的数据会存起来，因此出错时故意返回的字符串，让上面的断言失败
-		Authenticator: func(c context.Context, ctx *app.RequestContext) (interface{}, error) {
+		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
 			var req tiktok.CheckUserRequest
-			if err := ctx.BindAndValidate(&req); err != nil {
+			if err := c.BindAndValidate(&req); err != nil {
 				return "", jwt.ErrMissingLoginValues
 			}
 			if len(req.Username) == 0 || len(req.Password) == 0 {
@@ -67,7 +67,7 @@ func InitJWT() {
 			}
 
 			// TODO: 微服务拆分，使用rpc请求auth服务，rpc.CheckUser
-			users, err := QueryUserFunc(c, req.Username)
+			users, err := QueryUserFunc(ctx, req.Username)
 			if err != nil {
 				return "", errno.ServiceErr
 			}
@@ -91,25 +91,25 @@ func InitJWT() {
 				ID:   int64(users[0].ID),
 				Name: users[0].Username,
 			}
-			ctx.Set(consts.IdentityKeyID, user)
+			c.Set(consts.IdentityKeyID, user)
 			return user, nil
 		},
-		LoginResponse: func(c context.Context, ctx *app.RequestContext, code int, token string, expire time.Time) {
-			user := ctx.Value(consts.IdentityKeyID).(*tiktok.User)
-			ctx.JSON(http.StatusOK, tiktok.CheckUserResponse{
+		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, expire time.Time) {
+			user := c.Value(consts.IdentityKeyID).(*tiktok.User)
+			c.JSON(http.StatusOK, tiktok.CheckUserResponse{
 				StatusCode: errno.Success.ErrCode,
 				StatusMsg:  &errno.Success.ErrMsg,
 				UserID:     user.ID,
 				Token:      token,
 			})
 		},
-		Unauthorized: func(c context.Context, ctx *app.RequestContext, code int, message string) {
-			ctx.JSON(http.StatusOK, tiktok.CheckUserResponse{
+		Unauthorized: func(ctx context.Context, c *app.RequestContext, code int, message string) {
+			c.JSON(http.StatusOK, tiktok.CheckUserResponse{
 				StatusCode: errno.AuthorizationFailedErr.ErrCode,
 				StatusMsg:  &message,
 			})
 		},
-		HTTPStatusMessageFunc: func(e error, c context.Context, ctx *app.RequestContext) string {
+		HTTPStatusMessageFunc: func(e error, ctx context.Context, c *app.RequestContext) string {
 			switch t := e.(type) {
 			case errno.ErrNo:
 				return t.ErrMsg

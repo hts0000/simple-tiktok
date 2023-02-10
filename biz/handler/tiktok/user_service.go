@@ -62,10 +62,7 @@ func CreateUser(ctx context.Context, c *app.RequestContext) {
 	}
 
 	password := fmt.Sprintf("%x", h.Sum(nil))
-	_, err = db.CreateUser(ctx, &db.User{
-		Username: req.Username,
-		Password: password,
-	})
+	_, err = db.CreateUser(ctx, req.Username, password)
 	if err != nil {
 		log.Printf("创建用户失败: %v\n", err.Error())
 		c.JSON(http.StatusInternalServerError, tiktok.CreateUserResponse{

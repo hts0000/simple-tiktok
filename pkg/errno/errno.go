@@ -31,6 +31,7 @@ var (
 	ServiceErr             = NewErrNo(int64(http.StatusInternalServerError), "Service is unable to start successfully")
 	ParamErr               = NewErrNo(int64(http.StatusBadRequest), "Wrong Parameter has been given")
 	UserAlreadyExistErr    = NewErrNo(int64(http.StatusBadRequest), "User already exists")
+	UserNotExistErr        = NewErrNo(int64(http.StatusBadRequest), "User not exists")
 	AuthorizationFailedErr = NewErrNo(int64(http.StatusBadRequest), "Authorization failed")
 	PageNotFound           = NewErrNo(int64(http.StatusNotFound), "Page not found")
 	MethodNotAllowed       = NewErrNo(int64(http.StatusMethodNotAllowed), "Method not allowed")

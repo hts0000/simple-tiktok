@@ -12,4 +12,7 @@ const (
 	MySQLDefaultDSN = DBUser + ":" + DBPasswd + "@tcp(" + DBHost + ":" + DBPort + ")/" + DBName + "?charset=utf8mb4&parseTime=True&loc=Local"
 	UserTableName   = "user"
 	FollowTableName = "follow"
+
+	FollowUser   = 1
+	UnFollowUser = 2
 )

@@ -55,5 +55,7 @@ func _createuserMw() []app.HandlerFunc {
 
 func _getuserMw() []app.HandlerFunc {
 	// your code...
-	return nil
+	return []app.HandlerFunc{
+		mw.JwtMiddleware.MiddlewareFunc(),
+	}
 }

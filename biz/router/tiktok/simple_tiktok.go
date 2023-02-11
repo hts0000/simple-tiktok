@@ -24,6 +24,13 @@ func Register(r *server.Hertz) {
 			_feed.GET("/", append(_feed0Mw(), tiktok.Feed)...)
 		}
 		{
+			_publish := _douyin.Group("/publish", _publishMw()...)
+			{
+				_action := _publish.Group("/action", _actionMw()...)
+				_action.POST("/", append(_uploadvideoMw(), tiktok.UploadVideo)...)
+			}
+		}
+		{
 			_user := _douyin.Group("/user", _userMw()...)
 			_user.GET("/", append(_getuserMw(), tiktok.GetUser)...)
 			{

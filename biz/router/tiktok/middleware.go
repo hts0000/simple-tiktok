@@ -57,3 +57,18 @@ func _getuserMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _publishMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _actionMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _uploadvideoMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

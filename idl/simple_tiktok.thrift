@@ -48,9 +48,8 @@ struct GetUserResponse {
 }
 
 struct UploadVideoRequest {
-  1: string token     // 用户鉴权token
-  2: list<byte> data  // 视频数据
-  3: string title     // 视频标题
+  1: string token     // 用户鉴权token2: list<byte> data 视频数据
+  2: string title     // 视频标题
 }
 
 struct UploadVideoResponse {
@@ -67,6 +66,7 @@ struct Video {
   6: i64 comment_count   // 视频的评论总数
   7: bool is_favorite    // true - 已点赞，false - 未点赞
   8: string title        // 视频标题
+  9: string type         // 视频类型
 }
 
 struct User {

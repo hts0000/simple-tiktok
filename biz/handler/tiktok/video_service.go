@@ -4,26 +4,29 @@ package tiktok
 
 import (
 	"context"
+	"log"
+	"net/http"
+	tiktok "simple-tiktok/biz/model/tiktok"
+	"simple-tiktok/pkg/errno"
+	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	tiktok "simple-tiktok/biz/model/tiktok"
 )
 
 // Feed .
 // @router /douyin/feed/ [GET]
 func Feed(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req tiktok.FeedRequest
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
-		return
-	}
+	// var err error
+	// var req tiktok.FeedRequest
+	// err = c.BindAndValidate(&req)
+	// if err != nil {
+	// 	c.String(consts.StatusBadRequest, err.Error())
+	// 	return
+	// }
 
-	resp := new(tiktok.FeedResponse)
+	// resp := new(tiktok.FeedResponse)
 
-	c.JSON(consts.StatusOK, resp)
+	// c.JSON(consts.StatusOK, resp)
 }
 
 // UploadVideo .
@@ -33,11 +36,30 @@ func UploadVideo(ctx context.Context, c *app.RequestContext) {
 	var req tiktok.UploadVideoRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, tiktok.UploadVideoResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
+		return
+	}
+	fileheader, err := c.FormFile("data")
+	if err != nil {
+		log.Printf("参数FormFile失败: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.UploadVideoResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
 		return
 	}
 
-	resp := new(tiktok.UploadVideoResponse)
+	video := new(tiktok.Video)
+	tmp := strings.Split(fileheader.Filename, ".")
+	video.Type = "." + tmp[len(tmp)-1]
+	user := c.Value(req.Token).(*tiktok.User)
+	log.Println(user.ID)
+	log.Println(req.Title)
+	// resp := new(tiktok.UploadVideoResponse)
 
-	c.JSON(consts.StatusOK, resp)
+	// c.JSON(consts.StatusOK, resp)
 }

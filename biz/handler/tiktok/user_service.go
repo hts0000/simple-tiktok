@@ -62,10 +62,7 @@ func CreateUser(ctx context.Context, c *app.RequestContext) {
 	}
 
 	password := fmt.Sprintf("%x", h.Sum(nil))
-	_, err = db.CreateUser(ctx, &db.User{
-		Username: req.Username,
-		Password: password,
-	})
+	_, err = db.CreateUser(ctx, req.Username, password)
 	if err != nil {
 		log.Printf("创建用户失败: %v\n", err.Error())
 		c.JSON(http.StatusInternalServerError, tiktok.CreateUserResponse{
@@ -132,4 +129,104 @@ func GetUser(ctx context.Context, c *app.RequestContext) {
 			IsFollow:      true,
 		},
 	})
+}
+
+// FollowUser .
+// @router /douyin/relation/action/ [POST]
+func FollowUser(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req tiktok.FollowUserRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, tiktok.FollowUserResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
+		return
+	}
+
+	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
+	users, err := db.MGetUsers(ctx, []int64{
+		user.ID,
+		req.ToUserID,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+	if len(users) != 2 {
+		log.Printf("用户不存在, 查询用户: %v %v, 得到: ", user.ID, req.ToUserID)
+		for _, user := range users {
+			fmt.Printf("%d ", user.ID)
+		}
+		fmt.Println()
+		c.JSON(http.StatusOK, tiktok.FollowUserResponse{
+			StatusCode: errno.UserNotExistErr.ErrCode,
+			StatusMsg:  &errno.UserNotExistErr.ErrMsg,
+		})
+		return
+	}
+
+	switch req.ActionType {
+	case consts.FollowUser:
+		err := db.FollowUser(ctx, uint(user.ID), uint(req.ToUserID))
+		if err != nil {
+			log.Printf("用户: %d 关注用户: %d失败: %v\n", user.ID, req.ToUserID, err.Error())
+			c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
+				StatusCode: errno.ServiceErr.ErrCode,
+				StatusMsg:  &errno.ServiceErr.ErrMsg,
+			})
+			return
+		}
+	case consts.UnFollowUser:
+		err := db.UnFollowUser(ctx, uint(user.ID), uint(req.ToUserID))
+		if err != nil {
+			log.Printf("用户: %d 取消关注用户: %d失败: %v\n", user.ID, req.ToUserID, err.Error())
+			c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
+				StatusCode: errno.ServiceErr.ErrCode,
+				StatusMsg:  &errno.ServiceErr.ErrMsg,
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, tiktok.FollowUserResponse{
+		StatusCode: errno.Success.ErrCode,
+		StatusMsg:  &errno.Success.ErrMsg,
+	})
+}
+
+// GetFollow .
+// @router /douyin/relation/follow/list/ [GET]
+func GetFollow(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req tiktok.GetFollowRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp := new(tiktok.GetFollowResponse)
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetFollower .
+// @router /douyin/relation/follower/list/ [GET]
+func GetFollower(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req tiktok.GetFollowerRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp := new(tiktok.GetFollowerResponse)
+
+	c.JSON(http.StatusOK, resp)
 }

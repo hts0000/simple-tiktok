@@ -72,7 +72,7 @@ func InitJWT() {
 				return "", errno.ServiceErr
 			}
 			if len(users) == 0 {
-				return "", jwt.ErrFailedAuthentication
+				return "", errno.UserNotExistErr
 			}
 
 			h := md5.New()

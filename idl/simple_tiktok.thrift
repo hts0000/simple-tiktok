@@ -1,7 +1,7 @@
 namespace go tiktok
 
 struct CreateUserRequest {
-  1: string username (api.qury="username", api.vd="len($) > 0 && len($) < 33")
+  1: string username (api.qury="username", api.vd="len($) > 0 && len($) < 33 && email($); msg:sprintf('Invalid user name: %v', $)")
   2: string password (api.qury="password", api.vd="len($) > 0 && len($) < 33")
 }
 
@@ -13,7 +13,7 @@ struct CreateUserResponse {
 }
 
 struct CheckUserRequest {
-  1: string username (api.qury="username", api.vd="len($) > 0 && len($) < 33")
+  1: string username (api.qury="username", api.vd="len($) > 0 && len($) < 33 && email($); msg:sprintf('Invalid user name: %v', $)")
   2: string password (api.qury="password", api.vd="len($) > 0 && len($) < 33")
 }
 
@@ -45,6 +45,39 @@ struct GetUserResponse {
   1: i64 status_code              // 状态码，0-成功，其他值-失败
   2: optional string status_msg   // 返回状态描述
   3: User user                    // 用户信息
+}
+
+struct FollowUserRequest {
+  1: string token     // 用户鉴权token
+  2: i64 to_user_id   // 对方用户id
+  3: i32 action_type (api.vd="$ == 1 || $ == 2")  // 1-关注，2-取消关注
+}
+
+struct FollowUserResponse {
+  1: i64 status_code             // 状态码，0: 成功，其他值: 失败
+  2: optional string status_msg  // 返回状态描述
+}
+
+struct GetFollowRequest {
+  1: i64 user_id  // 用户id
+  2: string token // 用户鉴权token
+}
+
+struct GetFollowResponse {
+  1: i64 status_code              // 状态码，0: 成功，其他值: 失败
+  2: optional string status_msg   // 返回状态描述
+  3: list<User> user_list         // 用户信息列表
+}
+
+struct GetFollowerRequest {
+  1: i64 user_id  // 用户id
+  2: string token // 用户鉴权token
+}
+
+struct GetFollowerResponse {
+  1: i64 status_code              // 状态码，0: 成功，其他值: 失败
+  2: optional string status_msg   // 返回状态描述
+  3: list<User> user_list         // 用户列表
 }
 
 struct UploadVideoRequest {
@@ -82,6 +115,10 @@ service UserService {
   CreateUserResponse CreateUser(1: CreateUserRequest req) (api.post="/douyin/user/register/")
   CheckUserResponse CheckUser(1: CheckUserRequest req) (api.post="/douyin/user/login/")
   GetUserResponse GetUser(1: GetUserRequest req) (api.get="/douyin/user/")
+
+  FollowUserResponse FollowUser(1: FollowUserRequest req) (api.post="/douyin/relation/action/")
+  GetFollowResponse GetFollow(1: GetFollowRequest req) (api.get="/douyin/relation/follow/list/")
+  GetFollowerResponse GetFollower(1: GetFollowerRequest req) (api.get="/douyin/relation/follower/list/")
 }
 
 // 视频服务

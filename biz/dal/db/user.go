@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"simple-tiktok/pkg/consts"
 
 	"gorm.io/gorm"
@@ -24,14 +25,20 @@ func MGetUsers(c context.Context, userIDs []int64) ([]*User, error) {
 		return res, nil
 	}
 
-	if err := DB.WithContext(c).Where("id in ?", userIDs).Find(&res).Error; err != nil {
-		return nil, err
+	result := DB.WithContext(c).Where("id in ?", userIDs).Find(&res)
+	err := result.Error
+	if errors.Is(err, gorm.ErrRecordNotFound) || err == nil {
+		return res, nil
 	}
-	return res, nil
+	return res, err
 }
 
 // CreateUser create user info
-func CreateUser(c context.Context, user *User) (uint, error) {
+func CreateUser(c context.Context, username, password string) (uint, error) {
+	user := &User{
+		Username: username,
+		Password: password,
+	}
 	err := DB.WithContext(c).Create(user).Error
 	if err != nil {
 		return 0, err

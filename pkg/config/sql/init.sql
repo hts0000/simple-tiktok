@@ -27,7 +27,7 @@ CREATE TABLE `follow` (
   KEY `idx_delete_at` (`deleted_at`) USING BTREE COMMENT 'gorm删除时间索引'
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户关系表';
 
-CREATE TABLE `video` (
+CREATE TABLE `videos` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '视频id，全局唯一',
   `user_id` bigint unsigned NOT NULL COMMENT '上传者id',
   `title` varchar(50) NOT NULL COMMENT '视频标题',

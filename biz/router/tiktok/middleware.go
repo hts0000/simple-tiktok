@@ -72,7 +72,9 @@ func _actionMw() []app.HandlerFunc {
 
 func _uploadvideoMw() []app.HandlerFunc {
 	// your code...
-	return nil
+	return []app.HandlerFunc{
+		mw.JwtMiddleware.MiddlewareFunc(),
+	}
 }
 
 func _followMw() []app.HandlerFunc {
@@ -118,21 +120,6 @@ func _list0Mw() []app.HandlerFunc {
 }
 
 func _getfollowerMw() []app.HandlerFunc {
-	// your code...
-	return nil
-}
-
-func _publishMw() []app.HandlerFunc {
-	// your code...
-	return nil
-}
-
-func _actionMw() []app.HandlerFunc {
-	// your code...
-	return nil
-}
-
-func _uploadvideoMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }

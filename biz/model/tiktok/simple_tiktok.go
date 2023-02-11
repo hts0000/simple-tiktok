@@ -3591,7 +3591,6 @@ type Video struct {
 	CommentCount  int64  `thrift:"comment_count,6" form:"comment_count" json:"comment_count" query:"comment_count"`
 	IsFavorite    bool   `thrift:"is_favorite,7" form:"is_favorite" json:"is_favorite" query:"is_favorite"`
 	Title         string `thrift:"title,8" form:"title" json:"title" query:"title"`
-	Type          string `thrift:"type,9" form:"type" json:"type" query:"type"`
 }
 
 func NewVideo() *Video {
@@ -3635,10 +3634,6 @@ func (p *Video) GetTitle() (v string) {
 	return p.Title
 }
 
-func (p *Video) GetType() (v string) {
-	return p.Type
-}
-
 var fieldIDToName_Video = map[int16]string{
 	1: "id",
 	2: "author",
@@ -3648,7 +3643,6 @@ var fieldIDToName_Video = map[int16]string{
 	6: "comment_count",
 	7: "is_favorite",
 	8: "title",
-	9: "type",
 }
 
 func (p *Video) IsSetAuthor() bool {
@@ -3747,16 +3741,6 @@ func (p *Video) Read(iprot thrift.TProtocol) (err error) {
 		case 8:
 			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField8(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else {
-				if err = iprot.Skip(fieldTypeId); err != nil {
-					goto SkipFieldError
-				}
-			}
-		case 9:
-			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField9(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else {
@@ -3865,15 +3849,6 @@ func (p *Video) ReadField8(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Video) ReadField9(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
-		return err
-	} else {
-		p.Type = v
-	}
-	return nil
-}
-
 func (p *Video) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
 	if err = oprot.WriteStructBegin("Video"); err != nil {
@@ -3910,10 +3885,6 @@ func (p *Video) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField8(oprot); err != nil {
 			fieldId = 8
-			goto WriteFieldError
-		}
-		if err = p.writeField9(oprot); err != nil {
-			fieldId = 9
 			goto WriteFieldError
 		}
 
@@ -4069,23 +4040,6 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
-}
-
-func (p *Video) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("type", thrift.STRING, 9); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.Type); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 9 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
 func (p *Video) String() string {

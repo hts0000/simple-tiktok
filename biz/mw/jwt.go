@@ -27,7 +27,8 @@ func InitJWT() {
 		// 从哪获得jwt token
 		// 从 header 中，根据 Authorization 字段获取
 		// 从 query(url参数) 中，根据 token 字段获取
-		TokenLookup: "header: Authorization, query: token, cookie: jwt",
+		TokenLookup: "header: Authorization, query: token, cookie: jwt, form: token",
+		// Post方法提交Token需添加form:token, Get方法如果token在Param中, 需要添加相应字段
 		// 如果是从 header 中获取，根据 jwt 的使用约定，token 前缀是 Bearer
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,

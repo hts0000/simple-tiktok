@@ -99,7 +99,6 @@ struct Video {
   6: i64 comment_count   // 视频的评论总数
   7: bool is_favorite    // true - 已点赞，false - 未点赞
   8: string title        // 视频标题
-  9: string type         // 视频类型
 }
 
 struct User {

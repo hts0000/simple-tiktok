@@ -225,8 +225,9 @@ func GetFollow(ctx context.Context, c *app.RequestContext) {
 	follows := make([]*tiktok.User, n)
 	for i := 0; i < n; i++ {
 		follows[i] = &tiktok.User{
-			ID:   int64(users[i].UserID),
-			Name: users[i].Username,
+			ID:       int64(users[i].UserID),
+			Name:     users[i].Username,
+			IsFollow: true,
 		}
 	}
 	// TODO: 缓存到redis中，避免重复查询
@@ -264,12 +265,34 @@ func GetFollower(ctx context.Context, c *app.RequestContext) {
 
 	n := len(users)
 	followers := make([]*tiktok.User, n)
+	m := make(map[int64]*tiktok.User, n)
+	// 所有粉丝的uid列表
+	uids := make([]uint, n)
 	for i := 0; i < n; i++ {
 		followers[i] = &tiktok.User{
 			ID:   int64(users[i].FollowerID),
 			Name: users[i].FollowerName,
 		}
+		m[followers[i].ID] = followers[i]
+		uids[i] = users[i].FollowerID
 	}
+
+	uid := c.Value(consts.IdentityKeyID).(*tiktok.User).ID
+	// 查询粉丝列表中哪些用户被当前用户关注了
+	uids, err = db.MGetFollow(ctx, uint(uid), uids)
+	if err != nil {
+		log.Printf("查询用户: %v的粉丝中已关注用户失败: %v\n", uid, err.Error())
+		c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+
+	for _, uid := range uids {
+		m[int64(uid)].IsFollow = true
+	}
+
 	// TODO: 缓存到redis中，避免重复查询
 
 	c.JSON(http.StatusOK, tiktok.GetFollowerResponse{

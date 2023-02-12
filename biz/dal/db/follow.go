@@ -57,3 +57,10 @@ func FollowUser(ctx context.Context, uid1 uint, uid1Name string, uid2 uint, uid2
 func UnFollowUser(ctx context.Context, uid1, uid2 uint) error {
 	return DB.WithContext(ctx).Where("user_id = ? and follower_id = ?", uid2, uid1).Delete(&Follow{}).Error
 }
+
+// 查询uids列表中被uid关注
+func MGetFollow(ctx context.Context, uid uint, uids []uint) ([]uint, error) {
+	res := make([]uint, 0, len(uids))
+	err := DB.WithContext(ctx).Model(&Follow{}).Select("user_id").Where("user_id in ? and follower_id = ?", uids, uid).Find(&res).Error
+	return res, err
+}

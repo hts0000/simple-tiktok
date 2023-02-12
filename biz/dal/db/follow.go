@@ -10,8 +10,10 @@ import (
 
 type Follow struct {
 	gorm.Model
-	UserID     uint `json:"user_id"`
-	FollowerID uint `json:"follower_id"`
+	UserID       uint   `json:"user_id"`
+	Username     string `json:"username"`
+	FollowerID   uint   `json:"follower_id"`
+	FollowerName string `json:"follower_name"`
 }
 
 func (f *Follow) TableName() string {
@@ -33,14 +35,16 @@ func QueryFollow(ctx context.Context, uid uint) ([]*Follow, error) {
 }
 
 // uid1关注uid2
-func FollowUser(ctx context.Context, uid1, uid2 uint) error {
+func FollowUser(ctx context.Context, uid1 uint, uid1Name string, uid2 uint, uid2Name string) error {
 	// 先查软删除的记录
 	result := DB.WithContext(ctx).Unscoped().Where("user_id = ? and follower_id = ?", uid2, uid1).Take(&Follow{})
 	// 没有软删除的记录就新加一条记录
 	if err := result.Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return DB.WithContext(ctx).Create(&Follow{
-			UserID:     uid2,
-			FollowerID: uid1,
+			UserID:       uid2,
+			Username:     uid2Name,
+			FollowerID:   uid1,
+			FollowerName: uid1Name,
 		}).Error
 	} else if err != nil {
 		return err

@@ -145,24 +145,19 @@ func FollowUser(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
 	users, err := db.MGetUsers(ctx, []int64{
-		user.ID,
 		req.ToUserID,
 	})
 	if err != nil {
+		log.Printf("查询用户: %v失败: %v", req.ToUserID, err.Error())
 		c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
 			StatusCode: errno.ServiceErr.ErrCode,
 			StatusMsg:  &errno.ServiceErr.ErrMsg,
 		})
 		return
 	}
-	if len(users) != 2 {
-		log.Printf("用户不存在, 查询用户: %v %v, 得到: ", user.ID, req.ToUserID)
-		for _, user := range users {
-			fmt.Printf("%d ", user.ID)
-		}
-		fmt.Println()
+	if len(users) != 1 {
+		log.Printf("关注/取关用户: %v不存在", req.ToUserID)
 		c.JSON(http.StatusOK, tiktok.FollowUserResponse{
 			StatusCode: errno.UserNotExistErr.ErrCode,
 			StatusMsg:  &errno.UserNotExistErr.ErrMsg,
@@ -170,9 +165,12 @@ func FollowUser(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
+	var u1ID, u1Name = uint(user.ID), user.Name
+	var u2ID, u2Name = users[0].ID, users[0].Username
 	switch req.ActionType {
 	case consts.FollowUser:
-		err := db.FollowUser(ctx, uint(user.ID), uint(req.ToUserID))
+		err := db.FollowUser(ctx, u1ID, u1Name, u2ID, u2Name)
 		if err != nil {
 			log.Printf("用户: %d 关注用户: %d失败: %v\n", user.ID, req.ToUserID, err.Error())
 			c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
@@ -182,7 +180,7 @@ func FollowUser(ctx context.Context, c *app.RequestContext) {
 			return
 		}
 	case consts.UnFollowUser:
-		err := db.UnFollowUser(ctx, uint(user.ID), uint(req.ToUserID))
+		err := db.UnFollowUser(ctx, u1ID, u2ID)
 		if err != nil {
 			log.Printf("用户: %d 取消关注用户: %d失败: %v\n", user.ID, req.ToUserID, err.Error())
 			c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{

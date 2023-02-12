@@ -42,3 +42,14 @@ CREATE TABLE `videos` (
   KEY `idx_created_at` (`created_at`) USING BTREE COMMENT 'gorm创建时间索引',
   FOREIGN KEY (`user_id`) references user(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='视频表';
+
+CREATE TABLE `likes` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+    `user_id` bigint unsigned NOT NULL COMMENT '点赞用户id',
+    `video_id` bigint unsigned NOT NULL COMMENT '被点赞的视频id',
+    `cancel` tinyint(4) NOT NULL DEFAULT '0' COMMENT '默认点赞为0，取消赞为1',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `userIdtoVideoIdIdx` (`user_id`,`video_id`) USING BTREE,
+    KEY `userIdIdx` (`user_id`) USING BTREE,
+    KEY `videoIdx` (`video_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COMMENT='点赞表';

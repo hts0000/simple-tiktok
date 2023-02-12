@@ -204,13 +204,38 @@ func GetFollow(ctx context.Context, c *app.RequestContext) {
 	var req tiktok.GetFollowRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.FollowUserResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
 		return
 	}
 
-	resp := new(tiktok.GetFollowResponse)
+	users, err := db.QueryFollow(ctx, uint(req.UserID))
+	if err != nil {
+		log.Printf("查询用户: %v的关注失败: %v\n", req.UserID, err.Error())
+		c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
 
-	c.JSON(http.StatusOK, resp)
+	n := len(users)
+	follows := make([]*tiktok.User, n)
+	for i := 0; i < n; i++ {
+		follows[i] = &tiktok.User{
+			ID:   int64(users[i].UserID),
+			Name: users[i].Username,
+		}
+	}
+	// TODO: 缓存到redis中，避免重复查询
+
+	c.JSON(http.StatusOK, tiktok.GetFollowResponse{
+		StatusCode: errno.Success.ErrCode,
+		StatusMsg:  &errno.Success.ErrMsg,
+		UserList:   follows,
+	})
 }
 
 // GetFollower .
@@ -220,11 +245,36 @@ func GetFollower(ctx context.Context, c *app.RequestContext) {
 	var req tiktok.GetFollowerRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.FollowUserResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
 		return
 	}
 
-	resp := new(tiktok.GetFollowerResponse)
+	users, err := db.QueryFollower(ctx, uint(req.UserID))
+	if err != nil {
+		log.Printf("查询用户: %v的粉丝失败: %v\n", req.UserID, err.Error())
+		c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
 
-	c.JSON(http.StatusOK, resp)
+	n := len(users)
+	followers := make([]*tiktok.User, n)
+	for i := 0; i < n; i++ {
+		followers[i] = &tiktok.User{
+			ID:   int64(users[i].FollowerID),
+			Name: users[i].FollowerName,
+		}
+	}
+	// TODO: 缓存到redis中，避免重复查询
+
+	c.JSON(http.StatusOK, tiktok.GetFollowerResponse{
+		StatusCode: errno.Success.ErrCode,
+		StatusMsg:  &errno.Success.ErrMsg,
+		UserList:   followers,
+	})
 }

@@ -2,5 +2,6 @@
 
 TODO:
 1. 全局logger
+2. 查询用户关注和粉丝的接口结果缓存到Redis
 
 部署时需要安装ffmpeg，linux系统直接运行install.sh即可，windows需要自行安装ffmpeg

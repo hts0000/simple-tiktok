@@ -42,3 +42,18 @@ CREATE TABLE `videos` (
   KEY `idx_created_at` (`created_at`) USING BTREE COMMENT 'gorm创建时间索引',
   FOREIGN KEY (`user_id`) references user(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='视频表';
+
+CREATE TABLE `comments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '评论id，全局唯一',
+  `user_id` bigint unsigned NOT NULL COMMENT '评论者id',
+  `video_id` bigint unsigned NOT NULL COMMENT '评论视频id',
+  `content` varchar(500) NOT NULL COMMENT '评论内容',
+  `create_date` varchar(15) NOT NULL COMMENT '评论创建日期',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'gorm维护，创建时间',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'gorm维护，更新时间',
+  `deleted_at` timestamp NULL DEFAULT NULL COMMENT 'gorm维护，删除时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_video` (`video_id`) USING BTREE COMMENT '视频id索引',
+  FOREIGN KEY (`user_id`) references user(`id`),
+  FOREIGN KEY (`video_id`) references videos(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='评论表';

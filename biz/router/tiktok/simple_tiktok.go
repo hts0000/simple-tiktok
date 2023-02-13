@@ -20,21 +20,28 @@ func Register(r *server.Hertz) {
 	{
 		_douyin := root.Group("/douyin", _douyinMw()...)
 		{
+			_comment := _douyin.Group("/comment", _commentMw()...)
+			{
+				_action := _comment.Group("/action", _actionMw()...)
+				_action.POST("/", append(_uploadcommentMw(), tiktok.UploadComment)...)
+			}
+		}
+		{
 			_feed := _douyin.Group("/feed", _feedMw()...)
 			_feed.GET("/", append(_feed0Mw(), tiktok.Feed)...)
 		}
 		{
 			_publish := _douyin.Group("/publish", _publishMw()...)
 			{
-				_action := _publish.Group("/action", _actionMw()...)
-				_action.POST("/", append(_uploadvideoMw(), tiktok.UploadVideo)...)
+				_action0 := _publish.Group("/action", _action0Mw()...)
+				_action0.POST("/", append(_uploadvideoMw(), tiktok.UploadVideo)...)
 			}
 		}
 		{
 			_relation := _douyin.Group("/relation", _relationMw()...)
 			{
-				_action0 := _relation.Group("/action", _action0Mw()...)
-				_action0.POST("/", append(_followuserMw(), tiktok.FollowUser)...)
+				_action1 := _relation.Group("/action", _action1Mw()...)
+				_action1.POST("/", append(_followuserMw(), tiktok.FollowUser)...)
 			}
 			{
 				_follow := _relation.Group("/follow", _followMw()...)

@@ -90,6 +90,31 @@ struct UploadVideoResponse {
   2: optional string status_msg  // 返回状态描述
 }
 
+struct CommentRequest {
+  1: string token     // 用户鉴权token
+  2: string video_id     // 视频id
+  3: string action_type // 发布或删除评论
+  4: string comment_text //评论内容
+  5: string comment_id //评论id
+}
+
+struct CommentResponse {
+  1: i64 status_code             // 状态码，0 - 成功，其他值 - 失败
+  2: optional string status_msg  // 返回状态描述
+  3: Comment comment 
+}
+
+struct GetCommentRequest {
+  1: string token     // 用户鉴权token
+  2: string video_id     // 视频id
+}
+
+struct GetCommentResponse {
+  1: i64 status_code             // 状态码，0 - 成功，其他值 - 失败
+  2: optional string status_msg  // 返回状态描述
+  3: list<Comment> comment_list //评论列表 
+}
+
 struct Video {
   1: i64 id              // 视频唯一标识
   2: User author         // 视频作者信息
@@ -109,6 +134,13 @@ struct User {
   5: bool is_follow               // true - 已关注，false - 未关注
 }
 
+struct Comment {
+  1: i64 id //评论id
+  2: User user //评论用户
+  3: string content //评论内容
+  4: string create_date  //评论创建日期
+}
+
 // 用户服务
 service UserService {
   CreateUserResponse CreateUser(1: CreateUserRequest req) (api.post="/douyin/user/register/")
@@ -125,4 +157,9 @@ service VideoService {
   FeedResponse Feed(1: FeedRequest req) (api.get="/douyin/feed/")
   # 登录用户选择视频上传。
   UploadVideoResponse UploadVideo(1: UploadVideoRequest req) (api.post="/douyin/publish/action/")
+}
+
+service CommentService {
+  CommentResponse UploadComment(1: CommentRequest req) (api.POST="/douyin/comment/action/")
+
 }

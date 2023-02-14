@@ -36,4 +36,11 @@ func Init() {
 	if err := DB.Use(tracing.NewPlugin()); err != nil {
 		panic(err)
 	}
+
+	if !DB.Migrator().HasTable(&Video{}) {
+		if err := DB.AutoMigrate(&User{}, &Video{}); err != nil {
+			panic(err)
+		}
+	}
+
 }

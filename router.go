@@ -4,9 +4,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	handler "simple-tiktok/biz/handler"
+	tiktok "simple-tiktok/biz/model/tiktok"
 	"simple-tiktok/pkg/errno"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -32,5 +34,16 @@ func customizedRegister(r *server.Hertz) {
 			"status_code": errno.MethodNotAllowed.ErrCode,
 			"status_msg":  errno.MethodNotAllowed.ErrMsg,
 		})
+	})
+	r.GET("/file/", func(ctx context.Context, c *app.RequestContext) {
+		var req tiktok.DownloadRequest
+		err := c.BindAndValidate(&req)
+		if err != nil {
+			log.Printf("参数BindAndValidate失败: %v\n", err.Error())
+			return
+		}
+		filePath := fmt.Sprintf("./file/upload/%s", req.Location)
+		log.Println(filePath)
+		c.File(filePath)
 	})
 }

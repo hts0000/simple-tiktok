@@ -26,17 +26,43 @@ import (
 // Feed .
 // @router /douyin/feed/ [GET]
 func Feed(ctx context.Context, c *app.RequestContext) {
-	// var err error
-	// var req tiktok.FeedRequest
-	// err = c.BindAndValidate(&req)
-	// if err != nil {
-	// 	c.String(consts.StatusBadRequest, err.Error())
-	// 	return
-	// }
+	var err error
+	var req tiktok.FeedRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		log.Printf("参数BindAndValidate失败: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.UploadVideoResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
+		return
+	}
+	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
+	resp := new(tiktok.FeedResponse)
 
-	// resp := new(tiktok.FeedResponse)
+	var t time.Time
+	if req.LatestTime != nil {
+		loc, _ := time.LoadLocation("Local") //获取当地时区
+		t, _ = time.ParseInLocation("2023-02-13 15:47:13", *req.LatestTime, loc)
+	} else {
+		t = time.Now()
+	}
 
-	// c.JSON(consts.StatusOK, resp)
+	resp.VideoList, t, err = db.GetFeedVideo(ctx, t, user.ID)
+	if err != nil {
+		log.Printf("获取最新视频失败: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.UploadVideoResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+	resp.StatusCode = errno.Success.ErrCode
+	resp.StatusMsg = &errno.Success.ErrMsg
+	tmp := t.Unix()
+	resp.NextTime = &tmp
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // UploadVideo .
@@ -46,7 +72,7 @@ func UploadVideo(ctx context.Context, c *app.RequestContext) {
 	var req tiktok.UploadVideoRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		log.Println(err)
+		log.Printf("参数BindAndValidate失败: %v\n", err.Error())
 		c.JSON(http.StatusBadRequest, tiktok.UploadVideoResponse{
 			StatusCode: errno.ParamErr.ErrCode,
 			StatusMsg:  &errno.ParamErr.ErrMsg,

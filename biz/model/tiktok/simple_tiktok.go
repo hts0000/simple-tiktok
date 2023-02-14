@@ -947,7 +947,7 @@ func (p *CheckUserResponse) String() string {
 }
 
 type FeedRequest struct {
-	LatestTime *int64  `thrift:"latest_time,1,optional" form:"latest_time" json:"latest_time,omitempty" query:"latest_time"`
+	LatestTime *string `thrift:"latest_time,1,optional" form:"latest_time" json:"latest_time,omitempty" query:"latest_time"`
 	Token      *string `thrift:"token,2,optional" form:"token" json:"token,omitempty" query:"token"`
 }
 
@@ -955,9 +955,9 @@ func NewFeedRequest() *FeedRequest {
 	return &FeedRequest{}
 }
 
-var FeedRequest_LatestTime_DEFAULT int64
+var FeedRequest_LatestTime_DEFAULT string
 
-func (p *FeedRequest) GetLatestTime() (v int64) {
+func (p *FeedRequest) GetLatestTime() (v string) {
 	if !p.IsSetLatestTime() {
 		return FeedRequest_LatestTime_DEFAULT
 	}
@@ -1006,7 +1006,7 @@ func (p *FeedRequest) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1056,7 +1056,7 @@ ReadStructEndError:
 }
 
 func (p *FeedRequest) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
 		p.LatestTime = &v
@@ -1108,10 +1108,10 @@ WriteStructEndError:
 
 func (p *FeedRequest) writeField1(oprot thrift.TProtocol) (err error) {
 	if p.IsSetLatestTime() {
-		if err = oprot.WriteFieldBegin("latest_time", thrift.I64, 1); err != nil {
+		if err = oprot.WriteFieldBegin("latest_time", thrift.STRING, 1); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteI64(*p.LatestTime); err != nil {
+		if err := oprot.WriteString(*p.LatestTime); err != nil {
 			return err
 		}
 		if err = oprot.WriteFieldEnd(); err != nil {
@@ -5684,6 +5684,143 @@ func (p *Comment) String() string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("Comment(%+v)", *p)
+}
+
+type DownloadRequest struct {
+	Location string `thrift:"location,1" form:"location" json:"location" query:"location"`
+}
+
+func NewDownloadRequest() *DownloadRequest {
+	return &DownloadRequest{}
+}
+
+func (p *DownloadRequest) GetLocation() (v string) {
+	return p.Location
+}
+
+var fieldIDToName_DownloadRequest = map[int16]string{
+	1: "location",
+}
+
+func (p *DownloadRequest) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_DownloadRequest[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *DownloadRequest) ReadField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		p.Location = v
+	}
+	return nil
+}
+
+func (p *DownloadRequest) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("DownloadRequest"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField1(oprot); err != nil {
+			fieldId = 1
+			goto WriteFieldError
+		}
+
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *DownloadRequest) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("location", thrift.STRING, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Location); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *DownloadRequest) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("DownloadRequest(%+v)", *p)
 }
 
 // 用户服务

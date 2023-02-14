@@ -25,7 +25,7 @@ struct CheckUserResponse {
 }
 
 struct FeedRequest {
-  1: optional i64 latest_time  // 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
+  1: optional string latest_time  // 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
   2: optional string token     // 可选参数，登录用户设置
 }
 
@@ -139,6 +139,10 @@ struct Comment {
   2: User user //评论用户
   3: string content //评论内容
   4: string create_date  //评论创建日期
+}
+
+struct DownloadRequest {
+  1: string location
 }
 
 // 用户服务

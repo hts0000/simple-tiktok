@@ -140,3 +140,28 @@ func _action1Mw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _favoriteMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _favourite_ctionMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getfavouritelistMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _action2Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _list1Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

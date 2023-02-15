@@ -167,3 +167,35 @@ func SaveSnapshot(c *app.RequestContext, videoPath string) (err error) {
 
 	return nil
 }
+
+// FavouriteAction .
+// @router /douyin/favorite/action/ [POST]
+func FavouriteAction(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req tiktok.FavouriteActionRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp := new(tiktok.FavouriteActionResponse)
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetFavouriteList .
+// @router /douyin/favorite/list/ [POST]
+func GetFavouriteList(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req tiktok.GetFavouriteListRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp := new(tiktok.GetFavouriteListResponse)
+
+	c.JSON(http.StatusOK, resp)
+}

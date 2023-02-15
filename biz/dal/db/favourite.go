@@ -23,7 +23,7 @@ func (f *Favourite) TableName() string {
 }
 
 // IsFavourite 根据当前视频id判断是否点赞了该视频.
-func IsFavourite(ctx context.Context, videoId int64, userId int64) (bool, error) {
+/*func IsFavourite(ctx context.Context, videoId int64, userId int64) (bool, error) {
 	likeData := new(Favourite)
 	//未查询到数据，返回未点赞；
 	if result := DB.WithContext(ctx).Table("likes").Where("user_id = ? AND video_id = ?", userId, videoId).First(&likeData); result.RowsAffected == 0 {
@@ -34,7 +34,7 @@ func IsFavourite(ctx context.Context, videoId int64, userId int64) (bool, error)
 	} else {
 		return false, nil
 	}
-}
+}*/
 
 // GetLikeUserIdList 根据videoId获取所有点赞userId
 func GetLikeUserIdList(ctx context.Context, videoId int64) ([]int64, error) {
@@ -84,9 +84,9 @@ func FavouriteAction(ctx context.Context, userId int64, videoId int64, action_ty
 		if result.RowsAffected == 0 {
 			return errors.New("can't find this data")
 		} else {
-			//若已经点赞过，取消赞
+			//若已经点赞过，取消赞	 数据库中"cancel"改为0未点赞的状态
 			if result3 := DB.WithContext(ctx).Table("likes").Where("user_id = ? AND video_id = ?", userId, videoId).
-				Update("cancel", consts.DisFavour); result3.RowsAffected == 0 {
+				Update("cancel", 0); result3.RowsAffected == 0 {
 				return errors.New("update data fail")
 			}
 		}
@@ -95,8 +95,8 @@ func FavouriteAction(ctx context.Context, userId int64, videoId int64, action_ty
 }
 
 // GetFavouriteList  根据userId查询like表中点赞的全部videoId
-func GetFavouriteList(ctx context.Context, uid uint, likes []uint) ([]Video, error) {
-	result := make([]Video, 0, len(likes))
-	err := DB.WithContext(ctx).Model(&Favourite{}).Select("user_id").Where("user_id in ? and video_id = ?", likes, uid).Find(&result).Error
-	return result, err
+func GetFavouriteList(ctx context.Context, userId int64) ([]Video, error) {
+	results := make([]Video, 0)
+	err := DB.WithContext(ctx).Model(&Favourite{}).Select("user_id").Where("user_id in ? and video_id = ?", userId).Find(&results).Error
+	return results, err
 }

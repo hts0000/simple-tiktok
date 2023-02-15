@@ -84,3 +84,8 @@ func GetFeedVideo(c context.Context, tm time.Time, user_id int64) ([]*tiktok.Vid
 	}
 	return v_list, latest_time, err
 }
+
+func GetVideoAuthorId(c context.Context, videoId int64) (int64, error) {
+
+	return 0, nil
+}

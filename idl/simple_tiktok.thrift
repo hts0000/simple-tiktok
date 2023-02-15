@@ -185,7 +185,7 @@ service VideoService {
   UploadVideoResponse UploadVideo(1: UploadVideoRequest req) (api.post="/douyin/publish/action/")
 
   FavouriteActionResponse FavouriteAction(1: FavouriteActionRequest req)(api.post="/douyin/favorite/action/")
-  GetFavouriteListResponse GetFavouriteList(1: GetFavouriteListRequest req)(api.post="/douyin/favorite/list/")
+  GetFavouriteListResponse GetFavouriteList(1: GetFavouriteListRequest req)(api.get="/douyin/favorite/list/")
 }
 
 service CommentService {

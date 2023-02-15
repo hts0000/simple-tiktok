@@ -34,7 +34,7 @@ func Register(r *server.Hertz) {
 			}
 			{
 				_list := _favorite.Group("/list", _listMw()...)
-				_list.POST("/", append(_getfavouritelistMw(), tiktok.GetFavouriteList)...)
+				_list.GET("/", append(_getfavouritelistMw(), tiktok.GetFavouriteList)...)
 			}
 		}
 		{

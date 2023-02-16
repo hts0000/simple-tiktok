@@ -132,11 +132,33 @@ func _commentMw() []app.HandlerFunc {
 }
 
 func _uploadcommentMw() []app.HandlerFunc {
+	return []app.HandlerFunc{
+		mw.JwtMiddleware.MiddlewareFunc(),
+	}
+}
+
+func _action1Mw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
 
-func _action1Mw() []app.HandlerFunc {
+func _getpublishlistMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _list1Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getcommentlistMw() []app.HandlerFunc {
+	return []app.HandlerFunc{
+		mw.JwtMiddleware.MiddlewareFunc(),
+	}
+}
+
+func _list2Mw() []app.HandlerFunc {
 	// your code...
 	return nil
 }

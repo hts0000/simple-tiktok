@@ -25,6 +25,10 @@ func Register(r *server.Hertz) {
 				_action := _comment.Group("/action", _actionMw()...)
 				_action.POST("/", append(_uploadcommentMw(), tiktok.UploadComment)...)
 			}
+			{
+				_list := _comment.Group("/list", _listMw()...)
+				_list.GET("/", append(_getcommentlistMw(), tiktok.GetCommentList)...)
+			}
 		}
 		{
 			_feed := _douyin.Group("/feed", _feedMw()...)
@@ -36,6 +40,10 @@ func Register(r *server.Hertz) {
 				_action0 := _publish.Group("/action", _action0Mw()...)
 				_action0.POST("/", append(_uploadvideoMw(), tiktok.UploadVideo)...)
 			}
+			{
+				_list0 := _publish.Group("/list", _list0Mw()...)
+				_list0.GET("/", append(_getpublishlistMw(), tiktok.GetPublishList)...)
+			}
 		}
 		{
 			_relation := _douyin.Group("/relation", _relationMw()...)
@@ -46,15 +54,15 @@ func Register(r *server.Hertz) {
 			{
 				_follow := _relation.Group("/follow", _followMw()...)
 				{
-					_list := _follow.Group("/list", _listMw()...)
-					_list.GET("/", append(_getfollowMw(), tiktok.GetFollow)...)
+					_list1 := _follow.Group("/list", _list1Mw()...)
+					_list1.GET("/", append(_getfollowMw(), tiktok.GetFollow)...)
 				}
 			}
 			{
 				_follower := _relation.Group("/follower", _followerMw()...)
 				{
-					_list0 := _follower.Group("/list", _list0Mw()...)
-					_list0.GET("/", append(_getfollowerMw(), tiktok.GetFollower)...)
+					_list2 := _follower.Group("/list", _list2Mw()...)
+					_list2.GET("/", append(_getfollowerMw(), tiktok.GetFollower)...)
 				}
 			}
 		}

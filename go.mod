@@ -9,7 +9,7 @@ require (
 	github.com/cloudwego/hertz v0.5.1
 	github.com/hertz-contrib/jwt v1.0.2
 	gorm.io/driver/mysql v1.4.5
-	gorm.io/gorm v1.24.3
+	gorm.io/gorm v1.24.5
 	gorm.io/plugin/opentelemetry v0.1.0
 )
 
@@ -48,4 +48,5 @@ require (
 	golang.org/x/image v0.4.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
+	gorm.io/hints v1.1.1 // indirect
 )

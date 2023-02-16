@@ -81,13 +81,24 @@ struct GetFollowerResponse {
 }
 
 struct UploadVideoRequest {
-  1: string token     // 用户鉴权token2: list<byte> data 视频数据
+  1: string token     // 用户鉴权token
   2: string title     // 视频标题
 }
 
 struct UploadVideoResponse {
   1: i64 status_code             // 状态码，0 - 成功，其他值 - 失败
   2: optional string status_msg  // 返回状态描述
+}
+
+struct GetPublishRequest {
+  1: string token     // 用户鉴权token
+  2: string user_id     // 用户id
+}
+
+struct GetPublishResponse {
+  1: i64 status_code             // 状态码，0 - 成功，其他值 - 失败
+  2: optional string status_msg  // 返回状态描述
+  3: list<Video> video_list      // 视频列表
 }
 
 struct CommentRequest {
@@ -161,9 +172,10 @@ service VideoService {
   FeedResponse Feed(1: FeedRequest req) (api.get="/douyin/feed/")
   # 登录用户选择视频上传。
   UploadVideoResponse UploadVideo(1: UploadVideoRequest req) (api.post="/douyin/publish/action/")
+  GetPublishResponse GetPublishList(1: GetPublishRequest req) (api.get="/douyin/publish/list/")
 }
 
 service CommentService {
   CommentResponse UploadComment(1: CommentRequest req) (api.POST="/douyin/comment/action/")
-
+  GetCommentResponse GetCommentList(1: GetCommentRequest req) (api.get="/douyin/comment/list/")
 }

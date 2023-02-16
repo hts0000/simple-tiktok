@@ -4,10 +4,15 @@ package tiktok
 
 import (
 	"context"
+	"log"
+	"net/http"
+	"simple-tiktok/biz/dal/db"
+	tiktok "simple-tiktok/biz/model/tiktok"
+	"simple-tiktok/pkg/consts"
+	"simple-tiktok/pkg/errno"
+	"strconv"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	tiktok "simple-tiktok/biz/model/tiktok"
 )
 
 // UploadComment .
@@ -17,11 +22,90 @@ func UploadComment(ctx context.Context, c *app.RequestContext) {
 	var req tiktok.CommentRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		log.Printf("参数BindAndValidate失败: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
 		return
 	}
 
+	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
 	resp := new(tiktok.CommentResponse)
+	if req.ActionType == "1" {
+		v_id, err := strconv.ParseUint(req.VideoID, 10, 32)
+		if err != nil {
+			log.Printf("video_id转化失败: %v\n", err.Error())
+			c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+				StatusCode: errno.ParamErr.ErrCode,
+				StatusMsg:  &errno.ParamErr.ErrMsg,
+			})
+			return
+		}
+		resp.Comment, err = db.CreateComment(ctx, uint(user.ID), uint(v_id), req.CommentText)
+		if err != nil {
+			log.Printf("发表评论失败: %v\n", err.Error())
+			c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+				StatusCode: errno.ServiceErr.ErrCode,
+				StatusMsg:  &errno.ServiceErr.ErrMsg,
+			})
+		}
+	} else if req.ActionType == "2" {
+		c_id, err := strconv.ParseUint(req.CommentID, 10, 32)
+		if err != nil {
+			log.Printf("video_id转化失败: %v\n", err.Error())
+			c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+				StatusCode: errno.ParamErr.ErrCode,
+				StatusMsg:  &errno.ParamErr.ErrMsg,
+			})
+			return
+		}
+		db.DeleteComment(ctx, uint(c_id))
+	} else {
+		log.Printf("action_type错误: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	resp.StatusCode = errno.Success.ErrCode
+	resp.StatusMsg = &errno.Success.ErrMsg
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetCommentList .
+// @router /douyin/comment/list/ [Get]
+func GetCommentList(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req tiktok.GetCommentRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		log.Printf("参数BindAndValidate失败: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.GetCommentResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
+		return
+	}
+
+	resp := new(tiktok.GetCommentResponse)
+	log.Println(req)
+	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
+	v_id, err := strconv.ParseUint(req.VideoID, 10, 32)
+	if err != nil {
+		log.Printf("video_id转化失败: %v\n", err.Error())
+		c.JSON(http.StatusBadRequest, tiktok.CreateUserResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
+		return
+	}
+	resp.CommentList, _ = db.GetComment(ctx, uint(v_id), uint(user.ID))
+	resp.StatusCode = errno.Success.ErrCode
+	resp.StatusMsg = &errno.Success.ErrMsg
+
+	c.JSON(http.StatusOK, resp)
 }

@@ -33,17 +33,6 @@ func MGetUsers(c context.Context, userIDs []int64) ([]*User, error) {
 	return res, err
 }
 
-// 查找单个用户
-func GetUser(c context.Context, userID int64) (User, error) {
-	var res User
-	result := DB.WithContext(c).Where("id = ?", userID).Find(&res)
-	err := result.Error
-	if errors.Is(err, gorm.ErrRecordNotFound) || err == nil {
-		return res, nil
-	}
-	return res, err
-}
-
 // CreateUser create user info
 func CreateUser(c context.Context, username, password string) (uint, error) {
 	user := &User{

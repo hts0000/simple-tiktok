@@ -37,10 +37,21 @@ func Init() {
 		panic(err)
 	}
 
-	if !DB.Migrator().HasTable(&Video{}) {
-		if err := DB.AutoMigrate(&User{}, &Video{}); err != nil {
+	if !DB.Migrator().HasTable(&User{}) {
+		if err := DB.AutoMigrate(&User{}); err != nil {
 			panic(err)
 		}
 	}
 
+	if !DB.Migrator().HasTable(&Video{}) {
+		if err := DB.AutoMigrate(&Video{}); err != nil {
+			panic(err)
+		}
+	}
+
+	if !DB.Migrator().HasTable(&Comment{}) {
+		if err := DB.AutoMigrate(&Comment{}); err != nil {
+			panic(err)
+		}
+	}
 }

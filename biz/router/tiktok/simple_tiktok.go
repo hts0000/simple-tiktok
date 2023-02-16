@@ -31,38 +31,49 @@ func Register(r *server.Hertz) {
 			}
 		}
 		{
+			_favorite := _douyin.Group("/favorite", _favoriteMw()...)
+			{
+				_action0 := _favorite.Group("/action", _action0Mw()...)
+				_action0.POST("/", append(_favourite_ctionMw(), tiktok.FavouriteAction)...)
+			}
+			{
+				_list0 := _favorite.Group("/list", _list0Mw()...)
+				_list0.GET("/", append(_getfavouritelistMw(), tiktok.GetFavouriteList)...)
+			}
+		}
+		{
 			_feed := _douyin.Group("/feed", _feedMw()...)
 			_feed.GET("/", append(_feed0Mw(), tiktok.Feed)...)
 		}
 		{
 			_publish := _douyin.Group("/publish", _publishMw()...)
 			{
-				_action0 := _publish.Group("/action", _action0Mw()...)
-				_action0.POST("/", append(_uploadvideoMw(), tiktok.UploadVideo)...)
+				_action1 := _publish.Group("/action", _action1Mw()...)
+				_action1.POST("/", append(_uploadvideoMw(), tiktok.UploadVideo)...)
 			}
 			{
-				_list0 := _publish.Group("/list", _list0Mw()...)
-				_list0.GET("/", append(_getpublishlistMw(), tiktok.GetPublishList)...)
+				_list1 := _publish.Group("/list", _list1Mw()...)
+				_list1.GET("/", append(_getpublishlistMw(), tiktok.GetPublishList)...)
 			}
 		}
 		{
 			_relation := _douyin.Group("/relation", _relationMw()...)
 			{
-				_action1 := _relation.Group("/action", _action1Mw()...)
-				_action1.POST("/", append(_followuserMw(), tiktok.FollowUser)...)
+				_action2 := _relation.Group("/action", _action2Mw()...)
+				_action2.POST("/", append(_followuserMw(), tiktok.FollowUser)...)
 			}
 			{
 				_follow := _relation.Group("/follow", _followMw()...)
 				{
-					_list1 := _follow.Group("/list", _list1Mw()...)
-					_list1.GET("/", append(_getfollowMw(), tiktok.GetFollow)...)
+					_list2 := _follow.Group("/list", _list2Mw()...)
+					_list2.GET("/", append(_getfollowMw(), tiktok.GetFollow)...)
 				}
 			}
 			{
 				_follower := _relation.Group("/follower", _followerMw()...)
 				{
-					_list2 := _follower.Group("/list", _list2Mw()...)
-					_list2.GET("/", append(_getfollowerMw(), tiktok.GetFollower)...)
+					_list3 := _follower.Group("/list", _list3Mw()...)
+					_list3.GET("/", append(_getfollowerMw(), tiktok.GetFollower)...)
 				}
 			}
 		}

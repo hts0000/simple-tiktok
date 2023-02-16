@@ -162,3 +162,28 @@ func _list2Mw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _favoriteMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _favourite_ctionMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getfavouritelistMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _action2Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _list3Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

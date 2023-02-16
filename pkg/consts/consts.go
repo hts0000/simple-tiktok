@@ -12,8 +12,11 @@ const (
 	MySQLDefaultDSN    = DBUser + ":" + DBPasswd + "@tcp(" + DBHost + ":" + DBPort + ")/" + DBName + "?charset=utf8mb4&parseTime=True&loc=Local"
 	UserTableName      = "user"
 	FollowTableName    = "follow"
-	FavouriteTableName = "favourite"
+	FavouriteTableName = "likes"
 
-	FollowUser   = 1
-	UnFollowUser = 2
+	FollowUser      = 1
+	UnFollowUser    = 2
+	FavouriteAction = 1 //点赞状态
+	DisFavour       = 2 //取消点赞
+	LikeAction      = 1 //点赞的行为
 )

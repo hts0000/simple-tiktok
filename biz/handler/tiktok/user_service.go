@@ -301,3 +301,79 @@ func GetFollower(ctx context.Context, c *app.RequestContext) {
 		UserList:   followers,
 	})
 }
+
+// GetFriend .
+// @router /douyin/relation/friend/list/ [GET]
+func GetFriend(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req tiktok.GetFriendRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, tiktok.GetFriendResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
+		})
+		return
+	}
+
+	users, err := db.QueryFollower(ctx, uint(req.UserID))
+	if err != nil {
+		log.Printf("查询用户: %v的粉丝失败: %v\n", req.UserID, err.Error())
+		c.JSON(http.StatusInternalServerError, tiktok.GetFriendResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+
+	n := len(users)
+	m := make(map[uint]*tiktok.FriendUser, n)
+	// 所有粉丝的uid列表
+	uids := make([]uint, n)
+	for i := 0; i < n; i++ {
+		user := users[i]
+		m[user.FollowerID] = &tiktok.FriendUser{
+			ID:     int64(user.FollowerID),
+			Name:   user.FollowerName,
+			Avatar: "https://simple-tiktok-1300912551.cos.ap-guangzhou.myqcloud.com/avatar.jpg",
+		}
+		uids[i] = user.FollowerID
+	}
+
+	uid := c.Value(consts.IdentityKeyID).(*tiktok.User).ID
+	// 查询粉丝列表中哪些用户被当前用户关注了
+	uids, err = db.MGetFollow(ctx, uint(uid), uids)
+	if err != nil {
+		log.Printf("查询用户: %v的粉丝中已关注用户失败: %v\n", uid, err.Error())
+		c.JSON(http.StatusInternalServerError, tiktok.GetFriendResponse{
+			StatusCode: errno.ServiceErr.ErrCode,
+			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		})
+		return
+	}
+
+	friends := make([]*tiktok.FriendUser, 0, len(uids))
+	for _, uid := range uids {
+		friend := m[uid]
+		friend.IsFollow = true
+		friends = append(friends, friend)
+	}
+
+	u1 := uint(uid)
+	// 查询与各个好友之间的最新消息
+	for _, u2 := range uids {
+		msg, err := db.GetMessage(ctx, u1, u2)
+		if err != nil {
+			log.Printf("查询用户: %v的与用户: %v之间的最新消息失败: %v\n", u1, u2, err.Error())
+			continue
+		}
+		friend := m[u2]
+		friend.Message = &msg
+	}
+
+	c.JSON(http.StatusOK, tiktok.GetFriendResponse{
+		StatusCode: errno.Success.ErrCode,
+		StatusMsg:  &errno.Success.ErrMsg,
+		UserList:   friends,
+	})
+}

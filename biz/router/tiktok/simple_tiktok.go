@@ -76,6 +76,13 @@ func Register(r *server.Hertz) {
 					_list3.GET("/", append(_getfollowerMw(), tiktok.GetFollower)...)
 				}
 			}
+			{
+				_friend := _relation.Group("/friend", _friendMw()...)
+				{
+					_list4 := _friend.Group("/list", _list4Mw()...)
+					_list4.GET("/", append(_getfriendMw(), tiktok.GetFriend)...)
+				}
+			}
 		}
 		{
 			_user := _douyin.Group("/user", _userMw()...)

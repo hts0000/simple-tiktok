@@ -80,6 +80,17 @@ struct GetFollowerResponse {
   3: list<User> user_list         // 用户列表
 }
 
+struct GetFriendRequest {
+  1: i64 user_id  // 用户id
+  2: string token // 用户鉴权token
+}
+
+struct GetFriendResponse {
+  1: i64 status_code              // 状态码，0: 成功，其他值: 失败
+  2: optional string status_msg   // 返回状态描述
+  3: list<FriendUser> user_list   // 用户列表
+}
+
 struct UploadVideoRequest {
   1: string token     // 用户鉴权token
   2: string title     // 视频标题
@@ -167,6 +178,17 @@ struct User {
   5: bool is_follow               // true - 已关注，false - 未关注
 }
 
+struct FriendUser {
+  1: i64 id                       // 用户id
+  2: string name                  // 用户名称
+  3: optional i64 follow_count    // 关注总数
+  4: optional i64 follower_count  // 粉丝总数
+  5: bool is_follow               // true - 已关注，false - 未关注
+  6: string avatar                // 用户头像Url
+  7: optional string message      // 和该好友的最新聊天消息
+  8: i64 msgType                  // message消息的类型，0 => 当前请求用户接收的消息， 1 => 当前请求用户发送的消息
+}
+
 struct Comment {
   1: i64 id //评论id
   2: User user //评论用户
@@ -187,6 +209,8 @@ service UserService {
   FollowUserResponse FollowUser(1: FollowUserRequest req) (api.post="/douyin/relation/action/")
   GetFollowResponse GetFollow(1: GetFollowRequest req) (api.get="/douyin/relation/follow/list/")
   GetFollowerResponse GetFollower(1: GetFollowerRequest req) (api.get="/douyin/relation/follower/list/")
+
+  GetFriendResponse GetFriend(1: GetFriendRequest req) (api.get="/douyin/relation/friend/list/")
 }
 
 // 视频服务

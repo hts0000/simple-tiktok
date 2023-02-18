@@ -13,6 +13,7 @@ const (
 	UserTableName      = "user"
 	FollowTableName    = "follow"
 	FavouriteTableName = "likes"
+	MessageTableName   = "message"
 
 	FollowUser      = 1
 	UnFollowUser    = 2

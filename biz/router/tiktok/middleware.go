@@ -187,3 +187,18 @@ func _list3Mw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _friendMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _list4Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getfriendMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

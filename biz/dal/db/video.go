@@ -52,7 +52,7 @@ func GetFeedVideo(c context.Context, tm time.Time, user_id int64) ([]*tiktok.Vid
 	videos := make([]*Video, 0)
 	lf_list := make([]*lf_res, 0)
 	var err error
-	DB.WithContext(c).Clauses(hints.UseIndex("idx_videos_created_at")).Order("created_at desc").Where("created_at > ?", tm).Preload("Author").Limit(30).Find(&videos)
+	DB.WithContext(c).Clauses(hints.UseIndex("idx_created_at")).Order("created_at desc").Where("created_at > ?", tm).Preload("Author").Limit(30).Find(&videos)
 	query_fe := DB.WithContext(c).Table("follow").Select("COUNT(*) as follower_count, follow.user_id").Group("follow.user_id")
 	query_f := DB.WithContext(c).Table("follow").Select("COUNT(*) as follow_count, follow.follower_id").Group("follow.follower_id")
 	query_c := DB.WithContext(c).Table("comments").Select("COUNT(*) as comment_count, comments.video_id").Group("comments.video_id")
@@ -112,7 +112,6 @@ func GetPublishList(c context.Context, user_id uint) ([]*tiktok.Video, error) {
 	author := GetTiktokUser(c, user_id)
 	log.Println(author)
 	v_list := PublishListTiktokVideo(videos, lf_list, *author)
-	log.Println(v_list[0])
 	return v_list, err
 }
 

@@ -95,38 +95,37 @@ func GetUser(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	followers, err := db.QueryFollower(ctx, uint(req.UserID))
+	user, err := db.GetUser(ctx, req.UserID)
 	if err != nil {
-		log.Printf("查询用户: %d粉丝失败: %v\n", req.UserID, err.Error())
-		c.JSON(http.StatusInternalServerError, tiktok.GetUserResponse{
-			StatusCode: errno.ServiceErr.ErrCode,
-			StatusMsg:  &errno.ServiceErr.ErrMsg,
+		log.Printf("获取用户: %v信息失败: %v\n", req.UserID, err)
+		c.JSON(http.StatusBadRequest, tiktok.GetUserResponse{
+			StatusCode: errno.ParamErr.ErrCode,
+			StatusMsg:  &errno.ParamErr.ErrMsg,
 		})
 		return
 	}
 
-	follows, err := db.QueryFollow(ctx, uint(req.UserID))
-	if err != nil {
-		log.Printf("查询用户: %d关注失败: %v\n", req.UserID, err.Error())
-		c.JSON(http.StatusInternalServerError, tiktok.GetUserResponse{
-			StatusCode: errno.ServiceErr.ErrCode,
-			StatusMsg:  &errno.ServiceErr.ErrMsg,
-		})
-		return
-	}
+	// TODO: redis中缓存一份
 
-	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
-	followersCount := int64(len(followers))
-	followsCount := int64(len(follows))
+	followCnt := int64(user.FollowCount)
+	followerCnt := int64(user.FollowerCount)
+	tfavedCnt := int64(user.TotalFavorited)
+	wkCnt := int64(user.WorkCount)
+	favCnt := int64(user.FavoriteCount)
 	c.JSON(http.StatusOK, tiktok.GetUserResponse{
 		StatusCode: errno.Success.ErrCode,
 		StatusMsg:  &errno.Success.ErrMsg,
 		User: &tiktok.User{
-			ID:            req.UserID,
-			Name:          user.Name,
-			FollowCount:   &followsCount,
-			FollowerCount: &followersCount,
-			IsFollow:      true,
+			ID:              req.UserID,
+			Name:            user.Username,
+			FollowCount:     &followCnt,
+			FollowerCount:   &followerCnt,
+			Avatar:          &user.AvatarURL,
+			BackgroundImage: &user.BackgroundImageURL,
+			Signature:       &user.Signature,
+			TotalFavorited:  &tfavedCnt,
+			WorkCount:       &wkCnt,
+			FavoriteCount:   &favCnt,
 		},
 	})
 }
@@ -145,9 +144,7 @@ func FollowUser(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	users, err := db.MGetUsers(ctx, []int64{
-		req.ToUserID,
-	})
+	user2, err := db.GetUser(ctx, req.ToUserID)
 	if err != nil {
 		log.Printf("查询用户: %v失败: %v", req.ToUserID, err.Error())
 		c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
@@ -156,23 +153,13 @@ func FollowUser(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	if len(users) != 1 {
-		log.Printf("关注/取关用户: %v不存在", req.ToUserID)
-		c.JSON(http.StatusOK, tiktok.FollowUserResponse{
-			StatusCode: errno.UserNotExistErr.ErrCode,
-			StatusMsg:  &errno.UserNotExistErr.ErrMsg,
-		})
-		return
-	}
 
-	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
-	var u1ID, u1Name = uint(user.ID), user.Name
-	var u2ID, u2Name = users[0].ID, users[0].Username
+	user1 := c.Value(consts.IdentityKeyID).(*tiktok.User)
 	switch req.ActionType {
 	case consts.FollowUser:
-		err := db.FollowUser(ctx, u1ID, u1Name, u2ID, u2Name)
+		err := db.FollowUser(ctx, uint(user1.ID), user1.Name, uint(user2.ID), user2.Username)
 		if err != nil {
-			log.Printf("用户: %d 关注用户: %d失败: %v\n", user.ID, req.ToUserID, err.Error())
+			log.Printf("用户: %d 关注用户: %d失败: %v\n", user1.ID, user2.ID, err.Error())
 			c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
 				StatusCode: errno.ServiceErr.ErrCode,
 				StatusMsg:  &errno.ServiceErr.ErrMsg,
@@ -180,9 +167,9 @@ func FollowUser(ctx context.Context, c *app.RequestContext) {
 			return
 		}
 	case consts.UnFollowUser:
-		err := db.UnFollowUser(ctx, u1ID, u2ID)
+		err := db.UnFollowUser(ctx, uint(user1.ID), uint(user2.ID))
 		if err != nil {
-			log.Printf("用户: %d 取消关注用户: %d失败: %v\n", user.ID, req.ToUserID, err.Error())
+			log.Printf("用户: %d 取消关注用户: %d失败: %v\n", user1.ID, user2.ID, err.Error())
 			c.JSON(http.StatusInternalServerError, tiktok.FollowUserResponse{
 				StatusCode: errno.ServiceErr.ErrCode,
 				StatusMsg:  &errno.ServiceErr.ErrMsg,
@@ -223,11 +210,25 @@ func GetFollow(ctx context.Context, c *app.RequestContext) {
 
 	n := len(users)
 	follows := make([]*tiktok.User, n)
-	for i := 0; i < n; i++ {
+	for i, user := range users {
+		// 这些字段都用不上，客户端只展示名字和是否关注
+		// followCnt := int64(user.FollowCount)
+		// followerCnt := int64(user.FollowerCount)
+		// tfavedCnt := int64(user.TotalFavorited)
+		// wkCnt := int64(user.WorkCount)
+		// favCnt := int64(user.FavoriteCount)
 		follows[i] = &tiktok.User{
-			ID:       int64(users[i].UserID),
-			Name:     users[i].Username,
+			ID:       int64(user.ID),
+			Name:     user.Username,
 			IsFollow: true,
+			// FollowCount:     &followCnt,
+			// FollowerCount:   &followerCnt,
+			// Avatar:          &user.AvatarURL,
+			// BackgroundImage: &user.BackgroundImageURL,
+			// Signature:       &user.Signature,
+			// TotalFavorited:  &tfavedCnt,
+			// WorkCount:       &wkCnt,
+			// FavoriteCount:   &favCnt,
 		}
 	}
 	// TODO: 缓存到redis中，避免重复查询

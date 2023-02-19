@@ -10,12 +10,26 @@ import (
 
 type User struct {
 	gorm.Model
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username           string `json:"username"`
+	Password           string `json:"password"`
+	FollowCount        uint   `json:"follow_count"`
+	FollowerCount      uint   `json:"follower_count"`
+	AvatarURL          string `json:"avatar_url" gorm:"default:https://simple-tiktok-1300912551.cos.ap-guangzhou.myqcloud.com/avatar.jpg"`
+	BackgroundImageURL string `json:"background_image_url" gorm:"default:https://simple-tiktok-1300912551.cos.ap-guangzhou.myqcloud.com/background_image.jpg"`
+	Signature          string `json:"signature" gorm:"default:我是一只抖小萌😘💗💓"`
+	TotalFavorited     uint   `json:"total_favorited"`
+	WorkCount          uint   `json:"work_count"`
+	FavoriteCount      uint   `json:"favorite_count"`
 }
 
 func (u *User) TableName() string {
 	return consts.UserTableName
+}
+
+func GetUser(ctx context.Context, userID int64) (*User, error) {
+	user := User{}
+	err := DB.WithContext(ctx).Where("id = ?", userID).Take(&user).Error
+	return &user, err
 }
 
 // MGetUsers multiple get list of user info

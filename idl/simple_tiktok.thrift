@@ -159,6 +159,30 @@ struct GetFavouriteListResponse{
     3: list<Video> video_list      // 点赞过的视频列表
 }
 
+struct GetChatRequest {
+  1: string token       // 用户鉴权token
+  2: i64 to_user_id     // 对方用户id
+  3: i64 pre_msg_time   //上次最新消息的时间（新增字段-apk更新中）
+}
+
+struct GetChatResponse {
+  1: i64 status_code              // 状态码，0 - 成功，其他值 - 失败
+  2: optional string status_msg   // 返回状态描述
+  3: list<Message> message_list   // 消息列表
+}
+
+struct ChatMessageActionRequest {
+  1: string token                       // 用户鉴权token
+  2: i64 to_user_id                     // 对方用户id
+  3: i32 action_type (api.vd="$ == 1")  // 1-发送消息
+  4: string content                     // 消息内容
+}
+
+struct ChatMessageActionResponse {
+  1: i64 status_code              // 状态码，0 - 成功，其他值 - 失败
+  2: optional string status_msg   // 返回状态描述
+}
+
 struct Video {
   1: i64 id              // 视频唯一标识
   2: User author         // 视频作者信息
@@ -196,6 +220,14 @@ struct Comment {
   4: string create_date  //评论创建日期
 }
 
+struct Message {
+  1: i64 id                       // 消息id
+  2: i64 to_user_id               // 该消息接收者的id
+  3: i64 from_user_id             // 该消息发送者的id
+  4: string content               // 消息内容
+  5: optional i64 create_time     // 消息创建时间
+}
+
 struct DownloadRequest {
   1: string location
 }
@@ -229,4 +261,9 @@ service CommentService {
 service FavouriteService {
     FavouriteActionResponse FavouriteAction(1: FavouriteActionRequest req)(api.post="/douyin/favorite/action/")
     GetFavouriteListResponse GetFavouriteList(1: GetFavouriteListRequest req)(api.get="/douyin/favorite/list/")
+}
+
+service MessageService {
+  GetChatResponse GetChat(1: GetChatRequest req) (api.get="/douyin/message/chat/")
+  ChatMessageActionResponse ChatMessageAction(1: ChatMessageActionRequest req) (api.post="/douyin/message/action/")
 }

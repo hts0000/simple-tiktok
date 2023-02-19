@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"simple-tiktok/pkg/consts"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -21,26 +22,33 @@ func (m *Message) TableName() string {
 
 // 获取u1和u2之间的最新消息
 func GetMessage(ctx context.Context, u1, u2 uint) (string, error) {
-	message1 := Message{}
-	message2 := Message{}
-	result1 := DB.WithContext(ctx).Where("sender_id = ? AND receiver_id = ?", u1, u2).Last(&message1)
-	result2 := DB.WithContext(ctx).Where("sender_id = ? AND receiver_id = ?", u2, u1).Last(&message2)
-	err1, err2 := result1.Error, result2.Error
-	if err1 == nil && err2 == nil {
-		if message1.ID > message2.ID {
-			return message1.Message, nil
-		}
-		return message2.Message, nil
+	message := Message{}
+	result := DB.WithContext(ctx).Where("sender_id IN ? AND receiver_id IN ?", []uint{u1, u2}, []uint{u1, u2}).Last(&message)
+	err := result.Error
+	if err == nil || errors.Is(err, gorm.ErrRecordNotFound) {
+		return message.Message, nil
 	}
-	if err1 == nil {
-		return message1.Message, nil
-	} else if err2 == nil {
-		return message2.Message, nil
+	return "", err
+}
+
+// 获取u1和u2之间时间在timestamp之后的消息列表
+func GetMessages(ctx context.Context, u1, u2 uint, timestamp int64) ([]*Message, error) {
+	messages := make([]*Message, 0)
+	lastTime := time.Unix(timestamp, 0).Format("2006-01-02 15:04:05")
+	result := DB.WithContext(ctx).
+		Where("sender_id IN ? AND receiver_id IN ?", []uint{u1, u2}, []uint{u1, u2}).
+		Where("updated_at > ?", lastTime).
+		Find(&messages)
+	return messages, result.Error
+}
+
+// u1给u2发生一条消息
+func CreateMessage(ctx context.Context, u1, u2 uint, msg string) (uint, error) {
+	message := Message{
+		SenderID:   u1,
+		ReceiverID: u2,
+		Message:    msg,
 	}
-	if errors.Is(err1, gorm.ErrRecordNotFound) && errors.Is(err2, gorm.ErrRecordNotFound) {
-		return "", nil
-	} else if !errors.Is(err1, gorm.ErrRecordNotFound) {
-		return "", err1
-	}
-	return "", err2
+	err := DB.WithContext(ctx).Create(&message).Error
+	return message.ID, err
 }

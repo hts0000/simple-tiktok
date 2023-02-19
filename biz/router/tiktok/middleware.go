@@ -202,3 +202,30 @@ func _getfriendMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _messageMw() []app.HandlerFunc {
+	// your code...
+	return []app.HandlerFunc{
+		mw.JwtMiddleware.MiddlewareFunc(),
+	}
+}
+
+func _chatmessage_ctionMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _chatMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getchatMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _action3Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

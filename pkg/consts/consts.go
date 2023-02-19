@@ -7,7 +7,7 @@ const (
 	DBUser             = "root"
 	DBPasswd           = "123456"
 	DBHost             = "127.0.0.1"
-	DBPort             = "3306"
+	DBPort             = "13306"
 	DBName             = "tiktok"
 	MySQLDefaultDSN    = DBUser + ":" + DBPasswd + "@tcp(" + DBHost + ":" + DBPort + ")/" + DBName + "?charset=utf8mb4&parseTime=True&loc=Local"
 	UserTableName      = "user"
@@ -20,4 +20,5 @@ const (
 	FavouriteAction = 1 //点赞状态
 	DisFavour       = 2 //取消点赞
 	LikeAction      = 1 //点赞的行为
+	SendMsg         = 1
 )

@@ -18,7 +18,7 @@ const (
 	FollowUser      = 1
 	UnFollowUser    = 2
 	FavouriteAction = 1 //点赞状态
-	DisFavour       = 2 //取消点赞
-	LikeAction      = 1 //点赞的行为
+	LikeVideo       = 1
+	UnLikeVideo     = 2
 	SendMsg         = 1
 )

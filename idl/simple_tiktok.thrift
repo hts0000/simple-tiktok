@@ -137,23 +137,23 @@ struct GetCommentResponse {
   3: list<Comment> comment_list //评论列表 
 }
 
-struct FavouriteActionRequest{
+struct FavoriteActionRequest{
   1: string token                                 // 用户鉴权token
-  2: i64 to_video_id                              // 点赞视频的id
+  2: i64 video_id                                 // 点赞视频的id
   3: i32 action_type (api.vd="$ == 1 || $ == 2")  // 1-点赞，2-取消点赞
 }
 
-struct FavouriteActionResponse {
+struct FavoriteActionResponse {
   1: i64 status_code             // 状态码，0: 成功，其他值: 失败
   2: optional string status_msg  // 返回状态描述
 }
 
-struct GetFavouriteListRequest{
+struct GetFavoriteListRequest{
   1: i64 user_id                 // 用户id
   2: string token                // 用户鉴权token
 }
 
-struct GetFavouriteListResponse{
+struct GetFavoriteListResponse{
   1: i64 status_code             // 状态码，0: 成功，其他值: 失败
   2: optional string status_msg  // 返回状态描述
   3: list<Video> video_list      // 点赞过的视频列表
@@ -264,9 +264,9 @@ service CommentService {
   GetCommentResponse GetCommentList(1: GetCommentRequest req) (api.get="/douyin/comment/list/")
 }
 
-service FavouriteService {
-  FavouriteActionResponse FavouriteAction(1: FavouriteActionRequest req)(api.post="/douyin/favorite/action/")
-  GetFavouriteListResponse GetFavouriteList(1: GetFavouriteListRequest req)(api.get="/douyin/favorite/list/")
+service FavoriteService {
+  FavoriteActionResponse FavoriteAction(1: FavoriteActionRequest req)(api.post="/douyin/favorite/action/")
+  GetFavoriteListResponse GetFavoriteList(1: GetFavoriteListRequest req)(api.get="/douyin/favorite/list/")
 }
 
 service MessageService {

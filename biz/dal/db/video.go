@@ -148,3 +148,12 @@ func GetTiktokUser(c context.Context, user_id uint) *tiktok.User {
 	DB.WithContext(c).Table("follow").Select("follow.id as is_follow").Where("follow.follower_id = ? AND follow.user_id = ?", user_id, user_id).Find(&author)
 	return author
 }
+
+// 查找单个视频
+func GetVideo(c context.Context, vid uint) (*Video, error) {
+	video := Video{
+		ID: vid,
+	}
+	err := DB.WithContext(c).Take(&video).Error
+	return &video, err
+}

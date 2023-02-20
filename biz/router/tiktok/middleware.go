@@ -165,17 +165,9 @@ func _list2Mw() []app.HandlerFunc {
 
 func _favoriteMw() []app.HandlerFunc {
 	// your code...
-	return nil
-}
-
-func _favourite_ctionMw() []app.HandlerFunc {
-	// your code...
-	return nil
-}
-
-func _getfavouritelistMw() []app.HandlerFunc {
-	// your code...
-	return nil
+	return []app.HandlerFunc{
+		mw.JwtMiddleware.MiddlewareFunc(),
+	}
 }
 
 func _action2Mw() []app.HandlerFunc {
@@ -226,6 +218,16 @@ func _getchatMw() []app.HandlerFunc {
 }
 
 func _action3Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _favorite_ctionMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getfavoritelistMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }

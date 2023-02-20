@@ -1,0 +1,45 @@
+version: "3.7"
+services:
+  # MySQL
+  mysql:
+    image: mysql:latest
+    volumes:
+      # copy初始化sql脚本，容器创建时将会自动运行
+      - ./pkg/configs/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "13306:3306"
+    environment:
+      - MYSQL_DATABASE=tiktok
+      - MYSQL_ROOT_PASSWORD=123456
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - simple-tiktok-network
+  # simple-tiktok
+  # simple-tiktok:
+  #   image: hts0000/simple-tiktok:latest
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #   ports:
+  #     - "8080:8080"
+  #   networks:
+  #     - simple-tiktok-network
+
+  # 创建一个网络，把容器都加入到该网络中，使他们互通
+networks:
+  simple-tiktok-network:
+    # 声明使用的网络是使用 bridge 驱动来创建的
+    driver: bridge
+    ipam:
+      # 网络配置
+      config:
+        # 分配的子网网段
+        - subnet: 172.25.64.0/18
+          # 网关地址
+          gateway: 172.25.64.1

@@ -16,7 +16,10 @@ func Init() {
 
 func main() {
 	Init()
-	h := server.Default(server.WithHostPorts(":8080"))
+	h := server.Default(
+		server.WithHostPorts(":8080"),
+		server.WithMaxRequestBodySize(10*1024*1024),
+	)
 
 	register(h)
 	h.Spin()

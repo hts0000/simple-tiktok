@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"log"
 	tiktok "simple-tiktok/biz/model/tiktok"
+	"strconv"
 	"strings"
 	"time"
 
 	"gorm.io/hints"
+
+	"github.com/go-redis/redis"
 )
 
 type Video struct {
@@ -45,55 +48,49 @@ func CreateVideoAndGetId(c context.Context, title string, tp string, user_id int
 	if res.Error != nil {
 		return "", res.Error
 	}
+	RD.ZAdd("TimeLine", redis.Z{Score: float64(v.CreatedAt.Unix()), Member: strconv.FormatInt(int64(v.ID), 10)})
+	key_v := "video_" + strconv.FormatInt(int64(v.ID), 10) + "_info"
+	_, err := RD.HMSet(key_v, map[string]interface{}{
+		"Title":         v.Title,
+		"PlayURL":       v.Play_url,
+		"CoverURL":      v.Cover_url,
+		"CommentCount":  0,
+		"FavoriteCount": 0,
+		"AuthorId":      user_id,
+	}).Result()
+	RD.Expire(key_v, 5*time.Second)
+	if err != nil {
+		log.Printf("Insert into redis failed! err: %s.\n", err.Error())
+		return "", err
+	}
 	return fileName, nil
 }
 
-func GetFeedVideo(c context.Context, tm time.Time, user_id int64) ([]*tiktok.Video, time.Time, error) {
-	videos := make([]*Video, 0)
-	lf_list := make([]*lf_res, 0)
-	var err error
-	DB.WithContext(c).Clauses(hints.UseIndex("idx_created_at")).Order("created_at desc").Where("created_at > ?", tm).Preload("Author").Limit(30).Find(&videos)
-	query_fe := DB.WithContext(c).Table("follow").Select("COUNT(*) as follower_count, follow.user_id").Group("follow.user_id")
-	query_f := DB.WithContext(c).Table("follow").Select("COUNT(*) as follow_count, follow.follower_id").Group("follow.follower_id")
-	query_c := DB.WithContext(c).Table("comments").Select("COUNT(*) as comment_count, comments.video_id").Group("comments.video_id")
-	query_l := DB.WithContext(c).Table("likes").Select("Count(*) as favorite_count, likes.video_id").Group("likes.video_id")
-	DB.WithContext(c).Table("videos").Order("videos.created_at desc").
-		Select("likes.cancel, follow.id as follow, q_f.follow_count, q_fe.follower_count, q_c.comment_count, q_l.favorite_count").
-		Joins("left join likes on videos.ID=likes.video_id AND videos.author_id=likes.user_id").
-		Joins("left join follow on follow.follower_id = ? AND videos.author_id=follow.user_id", uint(user_id)).
-		Joins("left join (?) q_f on videos.author_id = q_f.follower_id", query_f).
-		Joins("left join (?) q_fe on videos.author_id = q_fe.user_id", query_fe).
-		Joins("left join (?) q_c on videos.ID = q_c.video_id", query_c).
-		Joins("left join (?) q_l on videos.ID = q_l.video_id", query_l).
-		Where("videos.created_at > ?", tm).Limit(30).Find(&lf_list)
-	v_list := FeedTiktokVideo(videos, lf_list)
-	var latest_time time.Time
-	if len(videos) > 0 {
-		latest_time = videos[len(videos)-1].CreatedAt
+func GetFeedVideo(c context.Context, max string, user_id int64) ([]*tiktok.Video, int64, error) {
+	min := "-inf"
+	id_list, err := RD.ZRevRangeByScoreWithScores("TimeLine", redis.ZRangeBy{Min: min, Max: max, Offset: 0, Count: 30}).Result()
+	if err != nil {
+		return nil, time.Now().Unix(), err
 	}
-	return v_list, latest_time, err
-}
-
-func FeedTiktokVideo(videos []*Video, lf_list []*lf_res) []*tiktok.Video {
-	v_list := make([]*tiktok.Video, len(lf_list))
+	v_list := make([]*tiktok.Video, len(id_list))
 	for i := 0; i < len(v_list); i++ {
-		tmp := new(tiktok.Video)
-		tmp.Author = new(tiktok.User)
-		tmp.Author.ID = int64(videos[i].Author.ID)
-		tmp.Author.Name = videos[i].Author.Username
-		tmp.Author.IsFollow = (lf_list[i].Follow > 0)
-		tmp.Author.FollowCount = &(lf_list[i].FollowCount)
-		tmp.Author.FollowerCount = &(lf_list[i].FollowerCount)
-		tmp.CommentCount = lf_list[i].CommentCount
-		tmp.FavoriteCount = lf_list[i].FavoriteCount
-		tmp.ID = int64(videos[i].ID)
-		tmp.Title = videos[i].Title
-		tmp.PlayURL = videos[i].Play_url
-		tmp.CoverURL = videos[i].Cover_url
-		tmp.IsFavorite = (lf_list[i].Cancel > 0)
-		v_list[i] = tmp
+		v_list[i] = new(tiktok.Video)
+		log.Println(id_list[i].Member)
+		au_id, err := GetTiktokVideo(c, v_list[i], id_list[i].Member.(string), uint(user_id))
+		if err != nil {
+			log.Printf("Get video infomation failed! err: %s.\n", err.Error())
+			return nil, time.Now().Unix(), err
+		}
+		log.Println(au_id)
+		v_list[i].Author, err = NewGetTiktokUser(c, au_id, user_id)
+		if err != nil {
+			log.Printf("Get author infomation failed! err: %s.\n", err.Error())
+			return nil, time.Now().Unix(), err
+		}
+		log.Println(*v_list[i].Author)
+		log.Println(*v_list[i])
 	}
-	return v_list
+	return v_list, int64(id_list[len(id_list)-1].Score), err
 }
 
 func GetPublishList(c context.Context, user_id uint) ([]*tiktok.Video, error) {
@@ -149,6 +146,69 @@ func GetTiktokUser(c context.Context, user_id uint) *tiktok.User {
 	return author
 }
 
+func NewGetTiktokUser(c context.Context, au_id int64, user_id int64) (*tiktok.User, error) {
+	key_u := "user_" + strconv.FormatInt(au_id, 10) + "_info"
+	author := new(tiktok.User)
+	author.ID = au_id
+	res, err := RD.HGetAll(key_u).Result()
+	log.Printf("whether user %d find redis: %d", au_id, len(res))
+	if err == nil {
+		if len(res) == 0 {
+			DB.WithContext(c).Table("user").Select(`user.username as name, user.avatar_url as avatar,
+				user.background_image_url as background_image, user.signature, user.total_favorited, 
+				user.work_count, user.favorite_count`).Where("id = ?", uint(author.ID)).Find(&author)
+			log.Println(*author)
+			author.FollowCount = new(int64)
+			DB.WithContext(c).Clauses(hints.UseIndex("idx_follower_id")).Table("follow").Where("follow.follower_id = ?", uint(author.ID)).Count(author.FollowCount)
+			author.FollowerCount = new(int64)
+			DB.WithContext(c).Clauses(hints.UseIndex("idx_user_id")).Table("follow").Where("follow.user_id = ?", uint(author.ID)).Count(author.FollowerCount)
+			_, err = RD.HMSet(key_u, map[string]interface{}{
+				"Name":            author.Name,
+				"FollowCount":     *author.FollowCount,
+				"FollowerCount":   *author.FollowerCount,
+				"Avatar":          *author.Avatar,
+				"BackgroundImage": *author.BackgroundImage,
+				"Signature":       *author.Signature,
+				"TotalFavorite":   *author.TotalFavorited,
+				"WorkCount":       *author.WorkCount,
+				"FavoriteCount":   *author.FavoriteCount,
+			}).Result()
+			RD.Expire(key_u, 10*time.Second)
+			if err != nil {
+				log.Printf("Insert Redis Failed, error:%s!\n", err.Error())
+				return nil, err
+			}
+		} else {
+			author.Name = res["Name"]
+			follow_count, _ := strconv.ParseInt(res["FollowCount"], 10, 64)
+			follower_count, _ := strconv.ParseInt(res["FollowerCount"], 10, 64)
+			author.FollowCount = &follow_count
+			author.FollowerCount = &follower_count
+			Avatar := res["Avatar"]
+			author.Avatar = &Avatar
+			Bgi := res["BackgroundImage"]
+			author.BackgroundImage = &Bgi
+			Sig := res["Signature"]
+			author.Signature = &Sig
+			WorkCount, _ := strconv.ParseInt(res["WorkCount"], 10, 64)
+			author.WorkCount = &WorkCount
+			FavoriteCount, _ := strconv.ParseInt(res["FavoriteCount"], 10, 64)
+			author.FavoriteCount = &FavoriteCount
+			Total, _ := strconv.ParseInt(res["TotalFavorite"], 10, 64)
+			author.TotalFavorited = &Total
+		}
+	} else {
+		log.Printf("Select Redis Failed, error:%s!\n", err.Error())
+		return nil, err
+	}
+	//后续建好整个redis后，也改用缓存
+	result := map[string]interface{}{}
+	DB.WithContext(c).Table("follow").Select("follow.id as is_follow").Omit("Author").Where("follow.follower_id = ? AND follow.user_id = ?", uint(au_id), uint(user_id)).Find(&result)
+	log.Println(result)
+	author.IsFollow = (len(result) != 0)
+	return author, nil
+}
+
 // 查找单个视频
 func GetVideo(c context.Context, vid uint) (*Video, error) {
 	video := Video{
@@ -156,4 +216,59 @@ func GetVideo(c context.Context, vid uint) (*Video, error) {
 	}
 	err := DB.WithContext(c).Take(&video).Error
 	return &video, err
+}
+
+func GetTiktokVideo(c context.Context, vd *tiktok.Video, v_id string, user_id uint) (int64, error) {
+	key_v := "video_" + v_id + "_info"
+	vd.ID, _ = strconv.ParseInt(v_id, 10, 64)
+	res, err := RD.HGetAll(key_v).Result()
+	log.Printf("whether video %d find redis: %d", vd.ID, len(res))
+	var au_id int64
+	if err == nil {
+		if len(res) == 0 {
+			DB.WithContext(c).Clauses(hints.UseIndex("idx_video")).Table("comments").Where("comments.video_id = ?", uint(vd.ID)).Count(&vd.CommentCount)
+			DB.WithContext(c).Clauses(hints.UseIndex("videoIdx")).Table("likes").Where("likes.video_id = ?", uint(vd.ID)).Count(&vd.FavoriteCount)
+			video := Video{
+				ID: uint(vd.ID),
+			}
+			err = DB.WithContext(c).Take(&video).Error
+			if err != nil {
+				log.Printf("Select Failed, error:%s!\n", err.Error())
+				return -1, err
+			}
+			vd.PlayURL = video.Play_url
+			vd.CoverURL = video.Cover_url
+			vd.Title = video.Title
+			au_id = int64(video.AuthorId)
+			_, err = RD.HMSet(key_v, map[string]interface{}{
+				"Title":         vd.Title,
+				"PlayURL":       vd.PlayURL,
+				"CoverURL":      vd.CoverURL,
+				"CommentCount":  vd.CommentCount,
+				"FavoriteCount": vd.FavoriteCount,
+				"AuthorId":      au_id,
+			}).Result()
+			RD.Expire(key_v, 5*time.Second)
+			if err != nil {
+				log.Printf("Insert Redis Failed, error:%s!\n", err.Error())
+				return -1, err
+			}
+		} else {
+			vd.CommentCount, _ = strconv.ParseInt(res["CommentCount"], 10, 64)
+			vd.FavoriteCount, _ = strconv.ParseInt(res["FavoriteCount"], 10, 64)
+			vd.Title = res["Title"]
+			vd.CoverURL = res["CoverURL"]
+			vd.PlayURL = res["PlayURL"]
+			au_id, _ = strconv.ParseInt(res["AuthorId"], 10, 64)
+		}
+	} else {
+		log.Printf("Select Redis Failed, error:%s!\n", err.Error())
+		return -1, err
+	}
+	//后续建好整个redis后，也改用缓存
+	result := map[string]interface{}{}
+	DB.WithContext(c).Table("likes").Select("likes.id as is_favorite").
+		Where("likes.user_id = ? AND likes.video_id = ?", user_id, vd.ID).Find(&result)
+	vd.IsFavorite = (len(result) != 0)
+	return au_id, nil
 }

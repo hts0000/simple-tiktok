@@ -74,7 +74,7 @@ CREATE TABLE `likes` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'id主键，全局唯一',
   `user_id` bigint unsigned NOT NULL COMMENT '点赞用户id',
   `video_id` bigint unsigned NOT NULL COMMENT '被点赞的视频id',
-  `cancel` tinyint(4) NOT NULL DEFAULT 0 COMMENT '默认不点赞为0，点赞为1'
+  `cancel` tinyint(4) NOT NULL DEFAULT 0 COMMENT '默认不点赞为0，点赞为1',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'gorm维护，创建时间',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'gorm维护，更新时间',
   `deleted_at` timestamp NULL DEFAULT NULL COMMENT 'gorm维护，删除时间',

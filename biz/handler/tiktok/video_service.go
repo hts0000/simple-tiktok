@@ -38,15 +38,9 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 	user := c.Value(consts.IdentityKeyID).(*tiktok.User)
 	resp := new(tiktok.FeedResponse)
 
-	var t time.Time
-	if req.LatestTime != nil {
-		loc, _ := time.LoadLocation("Local") //获取当地时区
-		t, _ = time.ParseInLocation("2023-02-13 15:47:13", *req.LatestTime, loc)
-	} else {
-		t = time.Now()
-	}
+	var t int64
 
-	resp.VideoList, t, err = db.GetFeedVideo(ctx, t, user.ID)
+	resp.VideoList, t, err = db.GetFeedVideo(ctx, *req.LatestTime, user.ID)
 	if err != nil {
 		log.Printf("获取最新视频失败: %v\n", err.Error())
 		c.JSON(http.StatusBadRequest, tiktok.FeedResponse{
@@ -55,9 +49,10 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
+	log.Println(*resp.VideoList[0])
 	resp.StatusCode = errno.Success.ErrCode
 	resp.StatusMsg = &errno.Success.ErrMsg
-	tmp := t.Unix()
+	tmp := t
 	resp.NextTime = &tmp
 
 	c.JSON(http.StatusOK, resp)
